@@ -8,15 +8,67 @@ Gum is a smart project discovery and management tool that automatically finds yo
 
 ### Installation
 
+#### Prerequisites
 ```bash
-# Install dependencies
+# Install SQLite3 (required dependency)
 sudo apt-get install sqlite3
+# or on macOS: brew install sqlite3
+```
 
-# Build gum
+#### Quick Install
+```bash
+# Clone and install gum
 git clone <repository>
 cd gum
-go build -o gum
-sudo mv gum /usr/local/bin/
+make install
+```
+
+This will automatically:
+- Build gum from source
+- Install to `~/.local/bin/gum` (user location)
+- Set proper permissions
+- Provide PATH configuration guidance
+
+#### Alternative Installation Methods
+
+**User Installation (Recommended)**
+```bash
+make install-user
+# Creates ~/.local/bin if needed
+# Installs to user directory (no sudo required)
+```
+
+**System Installation**
+```bash
+make install
+# Tries user location first, falls back to system
+# May require sudo for system-wide installation
+```
+
+**Manual Installation**
+```bash
+make build
+cp gum ~/.local/bin/
+chmod +x ~/.local/bin/gum
+```
+
+#### PATH Configuration
+
+If `~/.local/bin` is not in your PATH, add this to your shell profile:
+
+**Bash** (`~/.bashrc` or `~/.bash_profile`)
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**Zsh** (`~/.zshrc`)
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**Fish** (`~/.config/fish/config.fish`)
+```fish
+set -gx PATH $HOME/.local/bin $PATH
 ```
 
 ### First Run
@@ -29,6 +81,20 @@ gum projects
 # 1. Scan common directories for Git repositories
 # 2. Generate a config stub if needed
 # 3. Show all your projects
+# 4. Provide helpful feedback about discovery
+```
+
+#### Verification
+
+```bash
+# Check installation
+gum version
+
+# See available commands
+gum help
+
+# Test project discovery
+gum projects --format simple
 ```
 
 ### Example Output
@@ -62,6 +128,58 @@ gum projects --similar "web"   # Find projects similar to "web"
 ### Refresh Cache
 ```bash
 gum projects --refresh         # Force refresh of project discovery
+```
+
+## Troubleshooting
+
+### Installation Issues
+
+**Command not found**
+```bash
+# Check if gum is installed
+which gum
+
+# If not found, check PATH
+echo $PATH | grep -q ".local/bin" || echo "~/.local/bin not in PATH"
+
+# Add to PATH if needed
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**Permission denied**
+```bash
+# Check permissions
+ls -la ~/.local/bin/gum
+
+# Fix permissions if needed
+chmod +x ~/.local/bin/gum
+```
+
+**SQLite not found**
+```bash
+# Install SQLite3
+sudo apt-get install sqlite3  # Ubuntu/Debian
+brew install sqlite3          # macOS
+```
+
+### First Run Issues
+
+**No projects found**
+```bash
+# Check if directories exist
+ls -la ~/projects ~/oneTakeda ~/projects-local
+
+# Force refresh discovery
+gum projects --refresh
+```
+
+**Config generation issues**
+```bash
+# Check config directory
+ls -la ~/.config/gum/
+
+# Manually create if needed
+mkdir -p ~/.config/gum
 ```
 
 ## Next Steps

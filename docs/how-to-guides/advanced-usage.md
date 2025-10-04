@@ -74,6 +74,46 @@ gum dirs-cache --clear
 gum dirs-cache --info
 ```
 
+## Installation and Setup
+
+### Make Targets
+
+**Available Targets**
+```bash
+make build          # Build gum binary
+make install        # Smart installation (prefers user location)
+make install-user   # Explicit user installation
+make test           # Run unit tests
+make test-integration # Run all tests including integration
+make test-coverage  # Run tests with coverage reporting
+```
+
+**Installation Logic**
+- `make install` tries `~/.local/bin` first, falls back to system locations
+- `make install-user` forces user installation, creates directory if needed
+- Both targets provide helpful PATH configuration messages
+
+### Environment Setup
+
+**XDG Compliance**
+Gum follows XDG Base Directory specification:
+- Config: `~/.config/gum/` (respects `XDG_CONFIG_HOME`)
+- Cache: `~/.cache/gum/` (respects `XDG_CACHE_HOME`)
+- Data: `~/.local/share/gum/` (respects `XDG_DATA_HOME`)
+- State: `~/.local/state/gum/` (respects `XDG_STATE_HOME`)
+
+**Custom Environment**
+```bash
+# Set custom XDG directories
+export XDG_CONFIG_HOME="/custom/config"
+export XDG_CACHE_HOME="/custom/cache"
+export XDG_DATA_HOME="/custom/data"
+
+# Install and run gum
+make install
+gum projects
+```
+
 ## Integration Examples
 
 ### Shell Integration

@@ -206,6 +206,21 @@ gum update
 | `--help` | bool | false | Show help information |
 | `--version` | bool | false | Show version information |
 
+## Make Targets
+
+| Target | Description |
+|--------|-------------|
+| `make build` | Build gum binary from source |
+| `make install` | Smart installation (prefers user location) |
+| `make install-user` | Explicit user installation to `~/.local/bin` |
+| `make test` | Run unit tests |
+| `make test-integration` | Run all tests including integration |
+| `make test-coverage` | Run tests with coverage reporting |
+| `make test-clean` | Clean test artifacts |
+| `make test-pkg PKG=<package>` | Run tests for specific package |
+| `make test-race` | Run tests with race detection |
+| `make test-bench` | Run benchmarks |
+
 ## Environment Variables
 
 | Variable | Description | Default |
