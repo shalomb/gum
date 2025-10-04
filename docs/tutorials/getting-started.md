@@ -151,6 +151,12 @@ gum projects --verbose          # Show locate database usage
 # Automatically uses locate for 34x faster discovery when available
 ```
 
+### Version Information
+```bash
+gum version                     # Show basic version info
+gum version --verbose           # Show detailed build information
+```
+
 ## Troubleshooting
 
 ### Installation Issues

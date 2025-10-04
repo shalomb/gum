@@ -41,6 +41,9 @@ Gum delivers exceptional performance through multiple optimization strategies:
 git clone https://github.com/shalomb/gum.git
 cd gum
 make install
+
+# Verify installation
+gum version
 ```
 
 This automatically:

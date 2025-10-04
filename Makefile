@@ -21,7 +21,16 @@ $(eval $(RUN_ARGS):;@:)
 
 build: build-env
 	go mod tidy
-	go build -o gum
+	go build -ldflags "$(LDFLAGS)" -o gum
+
+# Build flags for version information
+GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+
+LDFLAGS := -X 'github.com/shalomb/gum/cmd.Version=$(VERSION)' \
+           -X 'github.com/shalomb/gum/cmd.GitCommit=$(GIT_COMMIT)' \
+           -X 'github.com/shalomb/gum/cmd.BuildDate=$(BUILD_DATE)'
 
 install: build
 	@# Prefer user location first, fall back to system location

@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/shalomb/gum/internal/cache"
 )
 
 func TestProjectsCommand(t *testing.T) {
@@ -237,7 +235,7 @@ func TestProjectsCommandIntegration(t *testing.T) {
 
 		// This will try to scan actual directories, which might not exist
 		// but should not panic
-		doListProjects("default", true)
+		doListProjects("default", true, false)
 	})
 
 	t.Run("DoListProjects with different formats", func(t *testing.T) {
@@ -251,7 +249,7 @@ func TestProjectsCommandIntegration(t *testing.T) {
 					}
 				}()
 
-				doListProjects(format, false)
+				doListProjects(format, false, false)
 			})
 		}
 	})

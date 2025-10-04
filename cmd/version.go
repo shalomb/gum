@@ -1,40 +1,55 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	// Build information - set during build
+	Version   = "dev"
+	GitCommit = "unknown"
+	BuildDate = "unknown"
+	GoVersion = runtime.Version()
 )
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Show version information",
+	Long: `Show detailed version information including:
+- Application version
+- Git commit hash
+- Build date
+- Go version
+- Runtime information
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Use --verbose for additional runtime details.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("version called")
+		showVersion()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
+	
+	// Add verbose flag to version command
+	versionCmd.Flags().BoolVarP(&verboseMode, "verbose", "v", false, "Show verbose runtime information")
+}
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// versionCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// versionCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func showVersion() {
+	fmt.Printf("gum version %s\n", Version)
+	fmt.Printf("  Git commit: %s\n", GitCommit)
+	fmt.Printf("  Build date: %s\n", BuildDate)
+	fmt.Printf("  Go version: %s\n", GoVersion)
+	fmt.Printf("  OS/Arch: %s/%s\n", runtime.GOOS, runtime.GOARCH)
+	
+	// Show runtime info if verbose
+	if verboseMode {
+		fmt.Printf("  Runtime: %s\n", runtime.Version())
+		fmt.Printf("  NumCPU: %d\n", runtime.NumCPU())
+		fmt.Printf("  GOMAXPROCS: %d\n", runtime.GOMAXPROCS(0))
+	}
 }

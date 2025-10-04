@@ -152,6 +152,42 @@ gum dirs --clear-cache
 
 Manage directory cache operations.
 
+### `gum version`
+
+Show detailed version information including build metadata.
+
+#### Syntax
+```bash
+gum version [flags]
+```
+
+#### Flags
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `-v, --verbose` | bool | false | Show verbose runtime information |
+
+#### Examples
+```bash
+# Show basic version information
+gum version
+
+# Show verbose version information
+gum version --verbose
+gum version -v
+```
+
+#### Output Format
+```
+gum version <version>
+  Git commit: <commit-hash>
+  Build date: <build-date>
+  Go version: <go-version>
+  OS/Arch: <os>/<arch>
+  Runtime: <runtime-version>     # Only with --verbose
+  NumCPU: <cpu-count>            # Only with --verbose
+  GOMAXPROCS: <max-procs>        # Only with --verbose
+```
+
 ### `gum --crontab`
 
 Generate ideal crontab configuration for automatic updates.
