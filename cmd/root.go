@@ -128,6 +128,14 @@ func generateCrontab() {
 	}
 	fmt.Println()
 
+	if !strings.Contains(currentCrontab, "gum sync") {
+		fmt.Println("# Sync GitHub repository metadata daily at 5 AM")
+		fmt.Printf("0 5 * * * %s sync --type full\n", gumPath)
+	} else {
+		fmt.Println("# gum sync already configured in crontab")
+	}
+	fmt.Println()
+
 	fmt.Println("# Optional: Data export for external tools")
 	fmt.Printf("# 0 4 * * * %s projects --format json > ~/.cache/gum/projects-$(date +\\%%Y\\%%m\\%%d).json\n", gumPath)
 	fmt.Printf("# 0 4 * * * %s dirs --format json > ~/.cache/gum/dirs-$(date +\\%%Y\\%%m\\%%d).json\n", gumPath)

@@ -6,6 +6,7 @@ A modern Go-based CLI tool for managing Git projects and directories, replacing 
 
 - **Project Discovery**: Automatically scan and catalog Git repositories
 - **Locate Integration**: 34x faster discovery using system locate database
+- **GitHub Sync**: Daily sync of repository metadata (topics, languages, activity)
 - **Directory Management**: Track frequently accessed directories
 - **GitHub Integration**: Discover and manage GitHub repositories
 - **Database Storage**: SQLite-based persistent storage with XDG compliance

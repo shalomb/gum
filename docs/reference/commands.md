@@ -188,6 +188,52 @@ gum version <version>
   GOMAXPROCS: <max-procs>        # Only with --verbose
 ```
 
+### `gum sync`
+
+Sync repository metadata from GitHub API.
+
+#### Syntax
+```bash
+gum sync [flags]
+```
+
+#### Flags
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `-t, --type` | string | "full" | Sync type: full, incremental, metadata |
+| `-n, --dry-run` | bool | false | Show what would be synced without making changes |
+
+#### Sync Types
+- **`full`**: Sync all accessible repositories (initial setup)
+- **`incremental`**: Sync only repositories older than 24 hours (daily)
+- **`metadata`**: Sync metadata fields only (lightweight)
+
+#### Examples
+```bash
+# Test sync without making changes
+gum sync --dry-run --type incremental
+
+# Initial setup - sync all repositories
+gum sync --type full
+
+# Daily maintenance - sync stale repositories
+gum sync --type incremental
+
+# Check what would be synced
+gum sync --dry-run --type full
+```
+
+#### Output Format
+```
+Starting full sync...
+Found 1273 repositories
+Processed 100/1273 repositories
+...
+Processed 1200/1273 repositories
+Full sync completed: 1273 repositories processed
+Sync completed successfully (full)
+```
+
 ### `gum --crontab`
 
 Generate ideal crontab configuration for automatic updates.

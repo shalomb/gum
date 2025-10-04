@@ -87,6 +87,39 @@ Monitor locate database usage and performance:
 # Discovered 8 project directories via locate
 ```
 
+### GitHub Repository Sync
+```bash
+gum sync [flags]
+```
+
+Sync repository metadata from GitHub API:
+
+#### Sync Types
+- **`--type full`**: Sync all accessible repositories (initial setup)
+- **`--type incremental`**: Sync only repositories older than 24 hours (daily)
+- **`--type metadata`**: Sync metadata fields only (lightweight)
+
+#### Examples
+```bash
+# Test sync without making changes
+gum sync --dry-run --type incremental
+
+# Initial setup - sync all repositories
+gum sync --type full
+
+# Daily maintenance - sync stale repositories
+gum sync --type incremental
+
+# Check sync status
+sqlite3 ~/.cache/gum/gum.db "SELECT * FROM github_sync_status ORDER BY started_at DESC LIMIT 5;"
+```
+
+#### Metadata Captured
+- **Repository info**: Names, descriptions, topics, languages
+- **Activity metrics**: Star counts, fork counts, open issues
+- **Timestamps**: Created, updated, last pushed
+- **Properties**: Private, archived, fork, template status
+
 ### Crontab Automation
 ```bash
 gum --crontab

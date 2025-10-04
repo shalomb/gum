@@ -37,7 +37,7 @@ Gum has a comprehensive test suite covering unit tests, integration tests, and d
 - File system operations
 - Error handling and recovery
 
-#### Command Tests (`cmd/projects_test.go`, `cmd/frecency_test.go`)
+#### Command Tests (`cmd/projects_test.go`, `cmd/frecency_test.go`, `cmd/sync_test.go`)
 - **Coverage**: 34.2% of statements
 - **CLI Functionality**: Test command-line interface
 - **Output Formats**: Test all output formats (default, JSON, FZF, simple)
@@ -46,6 +46,7 @@ Gum has a comprehensive test suite covering unit tests, integration tests, and d
 - **Frecency Algorithm**: Test frecency scoring properties and edge cases
 - **Directory Management**: Test directory tracking and historical import
 - **Locate Integration**: Test locate database usage and fallback behavior
+- **GitHub Sync**: Test repository metadata synchronization
 - **Similarity Functions**: Test project similarity algorithms
 
 **Key Test Areas:**
@@ -58,6 +59,8 @@ Gum has a comprehensive test suite covering unit tests, integration tests, and d
 - Directory tracking and scoring
 - Legacy cache import functionality
 - Locate database integration and fallback
+- GitHub API integration and caching
+- Repository metadata synchronization
 
 ### Integration Tests (`integration_test.go`)
 - **End-to-End Testing**: Full command execution
@@ -214,6 +217,49 @@ func TestLocateIntegration(t *testing.T) {
         if !strings.HasPrefix(repo, "/home/user") {
             t.Errorf("Repo %s not in expected path", repo)
         }
+    }
+}
+```
+
+### GitHub Sync Testing
+```go
+func TestGitHubSync(t *testing.T) {
+    client, err := github.NewGitHubClient()
+    if err != nil {
+        t.Skip("GitHub authentication required")
+    }
+    
+    // Test repository discovery
+    repos, err := client.DiscoverAllRepositories(context.Background())
+    if err != nil {
+        t.Fatalf("DiscoverAllRepositories failed: %v", err)
+    }
+    
+    if len(repos) == 0 {
+        t.Error("No repositories discovered")
+    }
+    
+    // Test metadata extraction
+    for _, repo := range repos[:5] { // Test first 5 repos
+        if repo.FullName == "" {
+            t.Error("Repository missing full_name")
+        }
+        if repo.Name == "" {
+            t.Error("Repository missing name")
+        }
+    }
+}
+
+func TestSyncCommand(t *testing.T) {
+    // Test dry-run sync
+    cmd := exec.Command("./gum", "sync", "--dry-run", "--type", "incremental")
+    output, err := cmd.Output()
+    if err != nil {
+        t.Fatalf("Dry-run sync failed: %v", err)
+    }
+    
+    if !strings.Contains(string(output), "Starting incremental sync") {
+        t.Error("Expected sync start message")
     }
 }
 ```

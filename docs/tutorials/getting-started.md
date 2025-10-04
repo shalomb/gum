@@ -157,6 +157,13 @@ gum version                     # Show basic version info
 gum version --verbose           # Show detailed build information
 ```
 
+### GitHub Repository Sync
+```bash
+gum sync --dry-run             # Test what would be synced
+gum sync --type full           # Sync all repositories (initial setup)
+gum sync --type incremental    # Sync only stale repositories (daily)
+```
+
 ## Troubleshooting
 
 ### Installation Issues

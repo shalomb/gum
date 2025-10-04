@@ -140,6 +140,45 @@ func (lf *LocateFinder) FindGitRepos(basePath string) ([]string, error)
 func (lf *LocateFinder) GetStatus() LocateStatus
 ```
 
+## GitHub Integration
+
+Gum integrates with GitHub API for rich repository metadata:
+
+### Architecture
+- **GitHubClient**: Wraps GitHub API with authentication via gh CLI
+- **Metadata Sync**: Daily sync of repository metadata
+- **Smart Caching**: Database-backed caching with TTL management
+- **Cross-Org Access**: Discovers repositories across organizations
+
+### Performance Benefits
+- **Rich Metadata**: Topics, languages, activity metrics, timestamps
+- **Smart Sync**: Full, incremental, and metadata-only sync modes
+- **API Efficiency**: Batch processing with rate limit compliance
+- **Offline Access**: Cached data available without network
+
+### Implementation
+```go
+type GitHubClient struct {
+    token      string
+    httpClient *http.Client
+    rateLimiter *RateLimiter
+}
+
+type GitHubMetadata struct {
+    Name        string    `json:"name"`
+    FullName    string    `json:"full_name"`
+    Description string    `json:"description"`
+    Topics      []string  `json:"topics"`
+    Language    string    `json:"language"`
+    StarCount   int       `json:"stargazers_count"`
+    ForkCount   int       `json:"forks_count"`
+    LastPushed  time.Time `json:"pushed_at"`
+}
+
+func (gc *GitHubClient) DiscoverAllRepositories() ([]*GitHubMetadata, error)
+func (gc *GitHubClient) GetRepositoryMetadata(owner, repo string) (*GitHubMetadata, error)
+```
+
 ### Database Optimizations
 
 - **Indexes**: All frequently queried columns
