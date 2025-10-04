@@ -52,45 +52,6 @@ func TestProjectsCommand(t *testing.T) {
 		}
 	})
 
-	t.Run("GetProjectDirs with projects-dirs.list", func(t *testing.T) {
-		// Clear cache first to ensure we test file discovery
-		c := cache.New()
-		c.Clear("project-dirs")
-
-		// Create a test projects-dirs.list file
-		configDir := filepath.Join(tempDir, ".config")
-		err := os.MkdirAll(configDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create config directory: %v", err)
-		}
-
-		projectsDirsList := filepath.Join(configDir, "projects-dirs.list")
-		testContent := `# Test project directories
-~/test-projects/
-~/custom-dir/
-# Comment line
-~/another-dir/`
-		
-		err = os.WriteFile(projectsDirsList, []byte(testContent), 0644)
-		if err != nil {
-			t.Fatalf("Failed to create projects-dirs.list: %v", err)
-		}
-
-		// Test directory discovery
-		dirs := getProjectDirs()
-		
-		// Should return some directories (exact list depends on environment)
-		if len(dirs) == 0 {
-			t.Error("Expected at least some directories")
-		}
-
-		// Verify the function doesn't panic and returns reasonable results
-		for _, dir := range dirs {
-			if dir == "" {
-				t.Error("Directory path should not be empty")
-			}
-		}
-	})
 
 	t.Run("FindGitProjects", func(t *testing.T) {
 		// Create a test directory structure

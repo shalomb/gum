@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/shalomb/gum/internal/cache"
@@ -41,7 +40,7 @@ This command allows you to:
 Auto-discovery looks for:
 - ~/projects/ (default)
 - ~/projects-* (glob pattern)
-- Any directories in ~/.config/projects-dirs.list (legacy support)`,
+- Smart auto-discovery of project directories`,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := cache.New()
 		
@@ -121,26 +120,6 @@ func discoverProjectDirs() []ProjectDir {
 		}
 	}
 	
-	// Add directories from legacy projects-dirs.list
-	configDir := os.Getenv("XDG_CONFIG_HOME")
-	if configDir == "" {
-		configDir = filepath.Join(home, ".config")
-	}
-	
-	projectsDirsList := filepath.Join(configDir, "projects-dirs.list")
-	if data, err := os.ReadFile(projectsDirsList); err == nil {
-		lines := strings.Split(string(data), "\n")
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if line != "" && !strings.HasPrefix(line, "#") {
-				// Expand ~ to home directory
-				if strings.HasPrefix(line, "~/") {
-					line = filepath.Join(home, line[2:])
-				}
-				defaultDirs = append(defaultDirs, line)
-			}
-		}
-	}
 	
 	// Remove duplicates and count git repos
 	seen := make(map[string]bool)

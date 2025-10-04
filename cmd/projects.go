@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/shalomb/gum/internal/cache"
+	"github.com/shalomb/gum/internal/locate"
 )
 
 // projectsCmd represents the projects command
@@ -27,6 +28,7 @@ projects-list with better performance and Go-native implementation.`,
 		format, _ := cmd.Flags().GetString("format")
 		refresh, _ := cmd.Flags().GetBool("refresh")
 		clearCache, _ := cmd.Flags().GetBool("clear-cache")
+		verbose, _ := cmd.Flags().GetBool("verbose")
 		
 		if clearCache {
 			c := cache.New()
@@ -38,7 +40,7 @@ projects-list with better performance and Go-native implementation.`,
 			return
 		}
 		
-		doListProjects(format, refresh)
+		doListProjects(format, refresh, verbose)
 	},
 }
 
@@ -49,6 +51,7 @@ func init() {
 	projectsCmd.Flags().StringP("format", "f", "default", "Output format: default, fzf, json, simple")
 	projectsCmd.Flags().BoolP("refresh", "r", false, "Force refresh cache")
 	projectsCmd.Flags().BoolP("clear-cache", "", false, "Clear cache and exit")
+	projectsCmd.Flags().BoolP("verbose", "v", false, "Show verbose output including locate usage")
 }
 
 type Project struct {
@@ -57,7 +60,10 @@ type Project struct {
 	Branch string
 }
 
-func doListProjects(format string, refresh bool) {
+var verboseMode bool
+
+func doListProjects(format string, refresh bool, verbose bool) {
+	verboseMode = verbose
 	c := cache.New()
 	var projects []Project
 	
@@ -131,26 +137,6 @@ func getProjectDirs() []string {
 		generateConfigStubIfNeeded(home, discoveredDirs)
 	}
 	
-	// Always include legacy projects-dirs.list if it exists
-	configDir := os.Getenv("XDG_CONFIG_HOME")
-	if configDir == "" {
-		configDir = filepath.Join(home, ".config")
-	}
-	
-	projectsDirsList := filepath.Join(configDir, "projects-dirs.list")
-	if data, err := os.ReadFile(projectsDirsList); err == nil {
-		lines := strings.Split(string(data), "\n")
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if line != "" && !strings.HasPrefix(line, "#") {
-				// Expand ~ to home directory
-				if strings.HasPrefix(line, "~/") {
-					line = filepath.Join(home, line[2:])
-				}
-				dirs = append(dirs, line)
-			}
-		}
-	}
 	
 	// Remove duplicates
 	seen := make(map[string]bool)
@@ -214,6 +200,85 @@ func readYAMLConfig() []string {
 func smartDiscoverProjectDirs(home string) []string {
 	var dirs []string
 	
+	// Try locate first for speed
+	if locateDirs := discoverWithLocate(home); len(locateDirs) > 0 {
+		dirs = append(dirs, locateDirs...)
+	}
+	
+	// Fallback to file system scanning for any missed directories
+	fileSystemDirs := discoverWithFileSystem(home)
+	dirs = append(dirs, fileSystemDirs...)
+	
+	// Remove duplicates
+	dirs = removeDuplicateDirs(dirs)
+	
+	// If no directories found with Git repos, fall back to common defaults
+	if len(dirs) == 0 {
+		dirs = append(dirs, filepath.Join(home, "projects"))
+		dirs = append(dirs, filepath.Join(home, "oneTakeda"))
+	}
+	
+	return dirs
+}
+
+// discoverWithLocate uses the locate database for fast discovery
+func discoverWithLocate(home string) []string {
+	finder := locate.NewLocateFinder()
+	if !finder.GetStatus().Available {
+		if verboseMode {
+			fmt.Fprintf(os.Stderr, "locate not available - using file system scanning\n")
+		}
+		return nil // No locate available
+	}
+	
+	// Check if database is fresh enough
+	status := finder.GetStatus()
+	if verboseMode {
+		fmt.Fprintf(os.Stderr, "Using locate database (last updated: %v)\n", status.LastUpdated.Format("2006-01-02 15:04:05"))
+	}
+	
+	if !status.IsFresh {
+		// Database is stale, but still use it as a starting point
+		fmt.Fprintf(os.Stderr, "Warning: locate database is %v old - some recent projects may be missing\n", status.Age)
+	}
+	
+	// Find git repos in home directory
+	repos, err := finder.FindGitRepos(home)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: locate failed: %v\n", err)
+		return nil
+	}
+	
+	if verboseMode {
+		fmt.Fprintf(os.Stderr, "Found %d git repositories via locate\n", len(repos))
+	}
+	
+	// Group repos by parent directory
+	dirMap := make(map[string]bool)
+	for _, repo := range repos {
+		parentDir := filepath.Dir(repo)
+		// Only include directories that are direct children of common patterns
+		if isCommonProjectDir(parentDir, home) {
+			dirMap[parentDir] = true
+		}
+	}
+	
+	var dirs []string
+	for dir := range dirMap {
+		dirs = append(dirs, dir)
+	}
+	
+	if verboseMode {
+		fmt.Fprintf(os.Stderr, "Discovered %d project directories via locate\n", len(dirs))
+	}
+	
+	return dirs
+}
+
+// discoverWithFileSystem uses traditional file system scanning
+func discoverWithFileSystem(home string) []string {
+	var dirs []string
+	
 	// Common patterns to check
 	patterns := []string{
 		filepath.Join(home, "projects"),
@@ -249,13 +314,50 @@ func smartDiscoverProjectDirs(home string) []string {
 		}
 	}
 	
-	// If no directories found with Git repos, fall back to common defaults
-	if len(dirs) == 0 {
-		dirs = append(dirs, filepath.Join(home, "projects"))
-		dirs = append(dirs, filepath.Join(home, "oneTakeda"))
+	return dirs
+}
+
+// isCommonProjectDir checks if a directory matches common project patterns
+func isCommonProjectDir(dir, home string) bool {
+	// Check if it's a direct child of common project directories
+	commonParents := []string{
+		filepath.Join(home, "projects"),
+		filepath.Join(home, "oneTakeda"),
+		filepath.Join(home, "projects-local"),
+		filepath.Join(home, "code"),
+		filepath.Join(home, "dev"),
+		filepath.Join(home, "workspace"),
+		filepath.Join(home, "repos"),
+		filepath.Join(home, "repositories"),
 	}
 	
-	return dirs
+	for _, parent := range commonParents {
+		if strings.HasPrefix(dir, parent+string(filepath.Separator)) {
+			return true
+		}
+	}
+	
+	// Check for projects-* and work-* patterns
+	if strings.Contains(filepath.Base(dir), "projects-") || strings.Contains(filepath.Base(dir), "work-") {
+		return true
+	}
+	
+	return false
+}
+
+// removeDuplicateDirs removes duplicate directories from the slice
+func removeDuplicateDirs(dirs []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+	
+	for _, dir := range dirs {
+		if !seen[dir] {
+			seen[dir] = true
+			result = append(result, dir)
+		}
+	}
+	
+	return result
 }
 
 // countGitReposInDir counts .git directories in a given directory

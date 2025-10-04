@@ -45,6 +45,7 @@ Gum has a comprehensive test suite covering unit tests, integration tests, and d
 - **Git Operations**: Test Git repository detection
 - **Frecency Algorithm**: Test frecency scoring properties and edge cases
 - **Directory Management**: Test directory tracking and historical import
+- **Locate Integration**: Test locate database usage and fallback behavior
 - **Similarity Functions**: Test project similarity algorithms
 
 **Key Test Areas:**
@@ -56,6 +57,7 @@ Gum has a comprehensive test suite covering unit tests, integration tests, and d
 - Frecency algorithm validation
 - Directory tracking and scoring
 - Legacy cache import functionality
+- Locate database integration and fallback
 
 ### Integration Tests (`integration_test.go`)
 - **End-to-End Testing**: Full command execution
@@ -182,6 +184,36 @@ func TestFrecencyScore(t *testing.T) {
                     score, tt.wantMin, tt.wantMax)
             }
         })
+    }
+}
+```
+
+### Locate Integration Testing
+```go
+func TestLocateIntegration(t *testing.T) {
+    finder := locate.NewLocateFinder()
+    
+    if !finder.GetStatus().Available {
+        t.Skip("locate not available")
+    }
+    
+    // Test database freshness
+    status := finder.GetStatus()
+    if !status.IsFresh {
+        t.Logf("Warning: locate database is %v old", status.Age)
+    }
+    
+    // Test git repository discovery
+    repos, err := finder.FindGitRepos("/home/user")
+    if err != nil {
+        t.Fatalf("FindGitRepos failed: %v", err)
+    }
+    
+    // Validate results
+    for _, repo := range repos {
+        if !strings.HasPrefix(repo, "/home/user") {
+            t.Errorf("Repo %s not in expected path", repo)
+        }
     }
 }
 ```

@@ -23,6 +23,7 @@ gum projects [flags]
 | `--search` | string | "" | Search projects by name |
 | `--similar` | string | "" | Find projects similar to given name |
 | `--limit` | int | 0 | Limit number of results (0 = no limit) |
+| `--verbose` | bool | false | Show verbose output including locate usage |
 
 #### Examples
 ```bash
@@ -40,6 +41,9 @@ gum projects --similar "web"
 
 # Limit results
 gum projects --limit 10
+
+# Show verbose output with locate usage
+gum projects --verbose
 
 # Force refresh
 gum projects --refresh

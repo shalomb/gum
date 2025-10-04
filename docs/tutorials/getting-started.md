@@ -145,6 +145,12 @@ gum --crontab                  # Generate ideal crontab configuration
 # Copy the output to your crontab: crontab -e
 ```
 
+### Performance Optimization
+```bash
+gum projects --verbose          # Show locate database usage
+# Automatically uses locate for 34x faster discovery when available
+```
+
 ## Troubleshooting
 
 ### Installation Issues

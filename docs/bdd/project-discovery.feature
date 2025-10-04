@@ -153,6 +153,27 @@ Then I should see a demonstration of the frecency algorithm
 And different scenarios should show appropriate scores
 And the output should be clearly formatted
 
+## Scenario: Locate integration for project discovery
+Given locate database is available and fresh
+When I run "gum projects --refresh --verbose"
+Then I should see locate database usage information
+And the discovery should be faster than file system scanning
+And I should see the number of repositories found via locate
+
+## Scenario: Locate fallback to file system
+Given locate database is unavailable or stale
+When I run "gum projects --refresh --verbose"
+Then I should see a warning about locate status
+And the system should fall back to file system scanning
+And all projects should still be discovered correctly
+
+## Scenario: Locate database freshness warning
+Given locate database is older than 24 hours
+When I run "gum projects --refresh"
+Then I should see a warning about database age
+And the system should still use locate for bulk discovery
+And file system scanning should supplement recent changes
+
 ## Scenario: Database persistence
 Given projects have been discovered
 When I restart gum and run "gum projects"

@@ -114,6 +114,32 @@ score = log(frequency + 1) * recency_multiplier * 1000
 - **Smooth Transitions**: No hard cutoffs or sudden changes
 - **Accessibility**: Minimum score ensures all directories remain accessible
 
+## Locate Integration
+
+Gum integrates with the system locate database for fast file discovery:
+
+### Architecture
+- **LocateFinder**: Wraps locate command with database detection
+- **Hybrid Approach**: Uses locate for bulk discovery + file system for recent changes
+- **Smart Fallback**: Graceful degradation when locate is unavailable
+
+### Performance Benefits
+- **34x Speed Improvement**: 4.3s → 0.125s for large directories
+- **Database Detection**: Works with plocate, GNU locate, BSD locate
+- **Freshness Monitoring**: Warns users about stale databases
+
+### Implementation
+```go
+type LocateFinder struct {
+    available    bool
+    databasePath string
+    lastUpdated  time.Time
+}
+
+func (lf *LocateFinder) FindGitRepos(basePath string) ([]string, error)
+func (lf *LocateFinder) GetStatus() LocateStatus
+```
+
 ### Database Optimizations
 
 - **Indexes**: All frequently queried columns

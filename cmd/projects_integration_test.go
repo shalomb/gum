@@ -182,15 +182,6 @@ func TestProjectDiscoveryIntegration(t *testing.T) {
 		// Remove YAML config
 		os.RemoveAll(testGumConfigDir)
 		
-		// Create legacy projects-dirs.list
-		legacyFile := filepath.Join(testConfigDir, "projects-dirs.list")
-		legacyContent := testHome + `/legacy-projects
-` + testHome + `/old-repos
-`
-		
-		if err := os.WriteFile(legacyFile, []byte(legacyContent), 0644); err != nil {
-			t.Fatalf("Failed to write legacy file: %v", err)
-		}
 		
 		// Create legacy directories with Git repos
 		legacyDirs := []string{
@@ -226,7 +217,7 @@ func TestProjectDiscoveryIntegration(t *testing.T) {
 		}
 		
 		if !foundLegacy {
-			t.Error("Legacy projects-dirs.list should be respected")
+			t.Error("Auto-discovery should find legacy directories")
 		}
 	})
 }
