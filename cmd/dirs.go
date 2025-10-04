@@ -6,6 +6,7 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -31,6 +32,12 @@ Combines current process data with historical cache to provide comprehensive dir
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		refresh, _ := cmd.Flags().GetBool("refresh")
 		clearCache, _ := cmd.Flags().GetBool("clear-cache")
+		demo, _ := cmd.Flags().GetBool("demo")
+		
+		if demo {
+			DemoFrecencyScores()
+			return
+		}
 		
 		if clearCache {
 			c := cache.New()
@@ -54,6 +61,7 @@ func init() {
 	dirsCmd.Flags().BoolP("verbose", "v", false, "Show verbose output with scores")
 	dirsCmd.Flags().BoolP("refresh", "r", false, "Force refresh cache")
 	dirsCmd.Flags().BoolP("clear-cache", "", false, "Clear cache and exit")
+	dirsCmd.Flags().Bool("demo", false, "Show frecency algorithm demonstration")
 }
 
 type DirEntry struct {
@@ -144,7 +152,7 @@ func fetchDirs() []*DirEntry {
 			entry.Frequency++
 			entry.LastSeen = now
 			// Update score with recency weighting
-			entry.Score = calculateScore(entry.Frequency, entry.LastSeen, now)
+			entry.Score = calculateFrecencyScore(entry.Frequency, entry.LastSeen, now)
 		} else {
 			dirs[displayPath] = &DirEntry{
 				Path:      displayPath,
@@ -164,11 +172,46 @@ func fetchDirs() []*DirEntry {
 	return entries
 }
 
-func calculateScore(frequency int, lastSeen, now time.Time) int64 {
-	// Simple scoring: frequency * recency factor
-	hoursAgo := now.Sub(lastSeen).Hours()
-	recencyFactor := 1.0 / (1.0 + hoursAgo/24.0) // Decay over days
-	return int64(float64(frequency) * recencyFactor * 1000)
+// calculateFrecencyScore calculates a frecency score (frequency + recency)
+// Based on Firefox's frecency algorithm with improvements
+func calculateFrecencyScore(frequency int, lastSeen, now time.Time) int64 {
+	age := now.Sub(lastSeen)
+	ageHours := age.Hours()
+	
+	// Frequency component with logarithmic scaling to prevent domination
+	// log(frequency + 1) gives diminishing returns for high frequencies
+	frequencyScore := math.Log(float64(frequency) + 1)
+	
+	// Recency component with exponential decay
+	// Different decay rates for different time periods
+	var recencyMultiplier float64
+	switch {
+	case ageHours < 1:
+		// Recent (last hour): no decay
+		recencyMultiplier = 1.0
+	case ageHours < 24:
+		// Today: mild decay
+		recencyMultiplier = math.Exp(-0.1 * (ageHours - 1))
+	case ageHours < 168: // 1 week
+		// This week: moderate decay
+		recencyMultiplier = math.Exp(-0.05 * (ageHours - 24)) * 0.9
+	case ageHours < 720: // 1 month
+		// This month: stronger decay
+		recencyMultiplier = math.Exp(-0.02 * (ageHours - 168)) * 0.5
+	default:
+		// Older: significant decay but never zero
+		recencyMultiplier = math.Exp(-0.01 * (ageHours - 720)) * 0.1
+	}
+	
+	// Ensure minimum score to keep everything accessible
+	if recencyMultiplier < 0.01 {
+		recencyMultiplier = 0.01
+	}
+	
+	// Combine frequency and recency
+	score := frequencyScore * recencyMultiplier * 1000
+	
+	return int64(score)
 }
 
 func outputDefaultFormat(entries []*DirEntry, verbose bool) {
@@ -232,7 +275,7 @@ func mergeDirectoryEntries(current, historical []*DirEntry) []*DirEntry {
 			// Update existing entry with current data
 			existing.Frequency++
 			existing.LastSeen = now
-			existing.Score = calculateScore(existing.Frequency, existing.LastSeen, now)
+			existing.Score = calculateFrecencyScore(existing.Frequency, existing.LastSeen, now)
 		} else {
 			// Add new entry
 			merged[currentEntry.Path] = currentEntry
