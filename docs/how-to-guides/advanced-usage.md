@@ -38,21 +38,28 @@ gum dirs [flags]
 ```
 
 #### Flags
-- `--add string`: Add directory to scan list
-- `--remove string`: Remove directory from scan list
-- `--list`: List configured directories
-- `--refresh`: Refresh directory cache
+- `--format string`: Output format (default, fzf, json, simple)
+- `--verbose`: Show frecency scores and additional information
+- `--refresh`: Force refresh cache with current processes
+- `--clear-cache`: Clear directory cache
+- `--demo`: Show frecency algorithm demonstration
 
 #### Examples
 ```bash
-# List configured directories
-gum dirs --list
+# List frequently accessed directories
+gum dirs
 
-# Add new directory
-gum dirs --add ~/new-projects
+# Show frecency scores
+gum dirs --verbose
 
-# Remove directory
-gum dirs --remove ~/old-projects
+# Demonstrate frecency algorithm
+gum dirs --demo
+
+# Force refresh with current processes
+gum dirs --refresh
+
+# Clear cache
+gum dirs --clear-cache
 ```
 
 ### Cache Management

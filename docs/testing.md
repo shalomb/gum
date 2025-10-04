@@ -37,12 +37,14 @@ Gum has a comprehensive test suite covering unit tests, integration tests, and d
 - File system operations
 - Error handling and recovery
 
-#### Command Tests (`cmd/projects_test.go`)
+#### Command Tests (`cmd/projects_test.go`, `cmd/frecency_test.go`)
 - **Coverage**: 34.2% of statements
 - **CLI Functionality**: Test command-line interface
 - **Output Formats**: Test all output formats (default, JSON, FZF, simple)
 - **Directory Discovery**: Test project directory scanning
 - **Git Operations**: Test Git repository detection
+- **Frecency Algorithm**: Test frecency scoring properties and edge cases
+- **Directory Management**: Test directory tracking and historical import
 - **Similarity Functions**: Test project similarity algorithms
 
 **Key Test Areas:**
@@ -51,6 +53,9 @@ Gum has a comprehensive test suite covering unit tests, integration tests, and d
 - Output formatting
 - Similarity scoring algorithms
 - Command-line argument handling
+- Frecency algorithm validation
+- Directory tracking and scoring
+- Legacy cache import functionality
 
 ### Integration Tests (`integration_test.go`)
 - **End-to-End Testing**: Full command execution
@@ -144,6 +149,42 @@ go test -run TestIntegration -v
 - **Cleanup**: Automatic cleanup of test artifacts
 
 ## Test Patterns
+
+### Frecency Algorithm Testing
+```go
+func TestFrecencyScore(t *testing.T) {
+    now := time.Now()
+    
+    tests := []struct {
+        name      string
+        frequency int
+        age       time.Duration
+        wantMin   int64
+        wantMax   int64
+    }{
+        {
+            name:      "Recent high frequency",
+            frequency: 100,
+            age:       30 * time.Minute,
+            wantMin:   4000,
+            wantMax:   5000,
+        },
+        // ... more test cases
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            lastSeen := now.Add(-tt.age)
+            score := calculateFrecencyScore(tt.frequency, lastSeen, now)
+            
+            if score < tt.wantMin || score > tt.wantMax {
+                t.Errorf("calculateFrecencyScore() = %d, want between %d and %d", 
+                    score, tt.wantMin, tt.wantMax)
+            }
+        })
+    }
+}
+```
 
 ### Database Testing
 ```go

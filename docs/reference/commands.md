@@ -80,7 +80,7 @@ api-service ~/oneTakeda/api-service ~/oneTakeda
 
 ### `gum dirs`
 
-Manage project directories for scanning.
+List frequently accessed directories with intelligent frecency scoring.
 
 #### Syntax
 ```bash
@@ -90,24 +90,58 @@ gum dirs [flags]
 #### Flags
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--add` | string | "" | Add directory to scan list |
-| `--remove` | string | "" | Remove directory from scan list |
-| `--list` | bool | false | List configured directories |
-| `--refresh` | bool | false | Refresh directory cache |
+| `--format` | string | "default" | Output format: default, fzf, json, simple |
+| `--verbose` | bool | false | Show frecency scores and additional information |
+| `--refresh` | bool | false | Force refresh cache with current processes |
+| `--clear-cache` | bool | false | Clear directory cache |
+| `--demo` | bool | false | Show frecency algorithm demonstration |
 
 #### Examples
 ```bash
-# List configured directories
-gum dirs --list
+# List frequently accessed directories
+gum dirs
 
-# Add directory
-gum dirs --add ~/new-projects
+# Show frecency scores
+gum dirs --verbose
 
-# Remove directory
-gum dirs --remove ~/old-projects
+# Demonstrate frecency algorithm
+gum dirs --demo
 
-# Refresh cache
+# Force refresh with current processes
 gum dirs --refresh
+
+# Clear cache
+gum dirs --clear-cache
+```
+
+#### Output Formats
+
+**Default Format**:
+```
+~/oneTakeda/terraform-teams-chatbot
+~/.config/dotfiles
+~/oneTakeda/machi/machi-core
+~/projects-local/gum
+```
+
+**Verbose Format**:
+```
+3218	~/oneTakeda/terraform-teams-chatbot
+2708	~/.config/dotfiles
+1791	~/oneTakeda/machi/machi-core
+1791	~/projects-local/gum
+```
+
+**JSON Format**:
+```json
+[
+  {
+    "path": "~/oneTakeda/terraform-teams-chatbot",
+    "score": 3218,
+    "frequency": 23,
+    "last_seen": "2025-10-04T17:32:38+02:00"
+  }
+]
 ```
 
 ### `gum dirs-cache`

@@ -119,6 +119,14 @@ gum projects --format simple   # Simple format (one per line)
 gum projects --format json     # JSON output
 ```
 
+### List Directories
+```bash
+gum dirs                        # List frequently accessed directories
+gum dirs --verbose             # Show frecency scores
+gum dirs --demo                # Demonstrate frecency algorithm
+gum dirs --refresh             # Force refresh with current processes
+```
+
 ### Search Projects
 ```bash
 gum projects --search "api"    # Find projects containing "api"
@@ -128,6 +136,7 @@ gum projects --similar "web"   # Find projects similar to "web"
 ### Refresh Cache
 ```bash
 gum projects --refresh         # Force refresh of project discovery
+gum dirs --refresh             # Force refresh of directory tracking
 ```
 
 ## Troubleshooting

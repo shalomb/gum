@@ -132,6 +132,27 @@ When I run "gum projects"
 Then the projects should be re-discovered
 And the cache should be updated
 
+## Scenario: Directory frecency scoring
+Given directories have been accessed with different frequencies and ages
+When I run "gum dirs --verbose"
+Then directories should be ranked by frecency score
+And recent directories should have higher scores
+And frequently used directories should have higher scores
+And old directories should have lower scores
+
+## Scenario: Legacy directory import
+Given a legacy cwds cache exists with historical directory data
+When I run "gum dirs" for the first time
+Then the legacy data should be imported
+And I should see all historical directories
+And the import should be logged
+
+## Scenario: Frecency algorithm demonstration
+When I run "gum dirs --demo"
+Then I should see a demonstration of the frecency algorithm
+And different scenarios should show appropriate scores
+And the output should be clearly formatted
+
 ## Scenario: Database persistence
 Given projects have been discovered
 When I restart gum and run "gum projects"

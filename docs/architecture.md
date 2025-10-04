@@ -18,11 +18,12 @@ Gum is a modern CLI tool built in Go that replaces legacy shell scripts with a r
 ### 1. CLI Layer (`cmd/`)
 
 - **`root.go`**: Main command setup and global flags
-- **`projects.go`**: Project discovery and listing
-- **`dirs.go`**: Directory usage tracking
+- **`projects.go`**: Project discovery and listing with hybrid auto-discovery
+- **`dirs.go`**: Directory usage tracking with frecency scoring
 - **`github.go`**: GitHub integration
 - **`clone.go`**: Repository cloning
 - **`version.go`**: Version information
+- **`frecency_demo.go`**: Frecency algorithm demonstration
 
 ### 2. Database Layer (`internal/database/`)
 
@@ -83,6 +84,35 @@ github_repos (standalone)
 - **Projects**: 5-minute TTL (stable data)
 - **Directories**: 30-second TTL (frequently changing)
 - **Project Dirs**: 1-hour TTL (rarely changing)
+
+## Frecency Algorithm
+
+The frecency algorithm combines frequency and recency to provide intelligent directory ranking:
+
+### Algorithm Components
+
+#### Frequency Component
+- **Logarithmic Scaling**: `log(frequency + 1)` prevents high-frequency domination
+- **Diminishing Returns**: Doubling frequency doesn't double the score
+- **Prevents Inflation**: High-frequency directories don't dominate forever
+
+#### Recency Component (Multi-Tier Decay)
+- **Recent (0-1h)**: No decay (multiplier = 1.0)
+- **Today (1-24h)**: Mild decay (exp(-0.1 * hours))
+- **This Week (1-7d)**: Moderate decay (exp(-0.05 * hours) * 0.9)
+- **This Month (1-30d)**: Stronger decay (exp(-0.02 * hours) * 0.5)
+- **Older (30d+)**: Significant decay but never zero (min 1%)
+
+### Formula
+```
+score = log(frequency + 1) * recency_multiplier * 1000
+```
+
+### Benefits
+- **Natural Aging**: Recent directories float to the top
+- **Frequency Balance**: High-frequency directories don't dominate forever
+- **Smooth Transitions**: No hard cutoffs or sudden changes
+- **Accessibility**: Minimum score ensures all directories remain accessible
 
 ### Database Optimizations
 
