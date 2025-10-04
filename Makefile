@@ -17,11 +17,41 @@ RUN_ARGS          := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 # ...and turn them into do-nothing targets
 $(eval $(RUN_ARGS):;@:)
 
-.PHONY: test test-unit test-integration test-coverage test-clean
+.PHONY: build install install-user test test-unit test-integration test-coverage test-clean
 
 build: build-env
 	go mod tidy
 	go build -o gum
+
+install: build
+	@# Prefer user location first, fall back to system location
+	@if [ -d "$$HOME/.local/bin" ]; then \
+		echo "Installing to ~/.local/bin"; \
+		cp gum $$HOME/.local/bin/; \
+		chmod +x $$HOME/.local/bin/gum; \
+		echo "gum installed to $$HOME/.local/bin/gum"; \
+		echo "Make sure ~/.local/bin is in your PATH"; \
+	elif [ -w "/usr/local/bin" ]; then \
+		echo "Installing to /usr/local/bin"; \
+		cp gum /usr/local/bin/; \
+		chmod +x /usr/local/bin/gum; \
+		echo "gum installed to /usr/local/bin/gum"; \
+	else \
+		echo "Installing to /usr/local/bin (requires sudo)"; \
+		sudo cp gum /usr/local/bin/; \
+		sudo chmod +x /usr/local/bin/gum; \
+		echo "gum installed to /usr/local/bin/gum"; \
+	fi
+
+install-user: build
+	@# Install to user location, creating directory if needed
+	@mkdir -p $$HOME/.local/bin
+	@echo "Installing to ~/.local/bin"
+	@cp gum $$HOME/.local/bin/
+	@chmod +x $$HOME/.local/bin/gum
+	@echo "gum installed to $$HOME/.local/bin/gum"
+	@echo "Make sure ~/.local/bin is in your PATH"
+	@echo "Add this to your shell profile: export PATH=\"$$HOME/.local/bin:\$$PATH\""
 
 init:
 	go mod init github.com/shalomb/gum
