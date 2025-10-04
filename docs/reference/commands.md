@@ -148,6 +148,54 @@ gum dirs --clear-cache
 
 Manage directory cache operations.
 
+### `gum --crontab`
+
+Generate ideal crontab configuration for automatic updates.
+
+#### Syntax
+```bash
+gum --crontab
+```
+
+#### Description
+Generates a complete crontab configuration optimized for gum automation:
+
+- **Smart Detection**: Checks existing crontab entries to avoid duplicates
+- **Path Resolution**: Automatically finds gum executable path
+- **Updatedb Integration**: Includes locate database updates
+- **Customizable Options**: Provides commented advanced features
+
+#### Output Format
+```bash
+# Ideal crontab configuration for gum
+# Generated on: [timestamp]
+#
+# To install: crontab -e
+# Copy the lines below (uncomment as needed)
+
+# Essential entries
+0 2 * * * /usr/bin/updatedb                    # Update locate database
+0 3 * * * /path/to/gum projects --refresh      # Refresh projects
+0 */2 * * * /path/to/gum dirs --refresh        # Refresh directories
+0 */6 * * * /path/to/gum update                # Update databases
+
+# Optional: Data export, cleanup, monitoring
+# [commented advanced options]
+```
+
+#### Examples
+```bash
+# Generate and review
+gum --crontab > ~/gum-crontab.txt
+vim ~/gum-crontab.txt
+
+# Install directly
+gum --crontab | crontab -
+
+# Check current crontab
+crontab -l | grep gum
+```
+
 #### Syntax
 ```bash
 gum dirs-cache [flags]

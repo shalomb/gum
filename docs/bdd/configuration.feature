@@ -199,3 +199,25 @@ When I run "gum projects"
 Then gum should handle the UTF-8 encoding correctly
 And the comments should be preserved
 And the paths should work correctly
+
+## Scenario: Crontab generation
+When I run "gum --crontab"
+Then I should see an ideal crontab configuration
+And the configuration should include updatedb entries
+And the configuration should include gum automation entries
+And the configuration should show the correct gum executable path
+And optional features should be commented out
+
+## Scenario: Crontab generation with existing entries
+Given I have existing crontab entries for gum
+When I run "gum --crontab"
+Then I should see a message indicating existing entries
+And duplicate entries should not be suggested
+And only missing entries should be shown
+
+## Scenario: Crontab generation without updatedb
+Given updatedb is not available on the system
+When I run "gum --crontab"
+Then the configuration should not include updatedb entries
+And gum automation entries should still be shown
+And a note about updatedb should be included

@@ -139,6 +139,12 @@ gum projects --refresh         # Force refresh of project discovery
 gum dirs --refresh             # Force refresh of directory tracking
 ```
 
+### Crontab Automation
+```bash
+gum --crontab                  # Generate ideal crontab configuration
+# Copy the output to your crontab: crontab -e
+```
+
 ## Troubleshooting
 
 ### Installation Issues
