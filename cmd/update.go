@@ -54,7 +54,8 @@ func init() {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			panic(fmt.Errorf("fatal: Missing config files: %T", err))
+			// Config file not found is OK - we'll use defaults
+			return
 		}
 		panic(fmt.Errorf("fatal: Error reading in config: %T", err))
 	}

@@ -1,0 +1,8 @@
+# Test project directories for gum tests
+# This file is used in integration tests
+
+# Test directories
+~/test-projects/
+~/test-custom-dir/
+# Comment line
+~/test-another-dir/

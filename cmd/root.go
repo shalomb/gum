@@ -51,6 +51,7 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().BoolP("clear-all-cache", "", false, "Clear all cache and exit")
 
   // rootCmd.PersistentFlags().BoolVarP(&Debug, "debug", "d", false, "Display debugging output in the console. (default: false)")
 	// viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))

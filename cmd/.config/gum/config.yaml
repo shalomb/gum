@@ -1,0 +1,18 @@
+# Gum Configuration
+# This file was auto-generated based on discovered project directories
+# Edit this file to customize which directories gum scans for Git repositories
+
+projects:
+  - ~projects  # 0 Git repositories
+  - ~oneTakeda  # 0 Git repositories
+
+# Additional directories you can add:
+# - ~/code
+# - ~/dev
+# - ~/workspace
+# - ~/repos
+# - ~/repositories
+# - /path/to/any/directory
+
+# Note: Directories with 0 Git repositories will be ignored
+# Remove directories from this list to exclude them from scanning

@@ -1,0 +1,279 @@
+# Gum Testing Guide
+
+## Overview
+
+Gum has a comprehensive test suite covering unit tests, integration tests, and database operations. This guide explains how to run tests, understand test results, and contribute to the test suite. The test suite ensures reliability, performance, and correctness of the SQLite-based project management system.
+
+## Test Structure
+
+### Unit Tests
+
+#### Database Tests (`internal/database/database_test.go`)
+- **Coverage**: 83.2% of statements
+- **CRUD Operations**: Test all database operations (Create, Read, Update, Delete)
+- **Concurrency**: Test concurrent database access with WAL mode
+- **Schema**: Verify database schema initialization and constraints
+- **Performance**: Test query performance and indexing
+
+**Key Test Areas:**
+- Project management (insert, update, query)
+- Project directory tracking
+- GitHub repository storage
+- Directory usage statistics
+- Similarity scoring
+- Database statistics and maintenance
+
+#### Cache Tests (`internal/cache/cache_test.go`)
+- **Coverage**: 85.3% of statements
+- **TTL Functionality**: Test time-to-live expiration
+- **Concurrency**: Test concurrent cache operations
+- **File Operations**: Test cache file creation and corruption handling
+- **XDG Compliance**: Test XDG directory usage
+
+**Key Test Areas:**
+- Cache set/get operations
+- TTL expiration and cleanup
+- Concurrent access patterns
+- File system operations
+- Error handling and recovery
+
+#### Command Tests (`cmd/projects_test.go`)
+- **Coverage**: 34.2% of statements
+- **CLI Functionality**: Test command-line interface
+- **Output Formats**: Test all output formats (default, JSON, FZF, simple)
+- **Directory Discovery**: Test project directory scanning
+- **Git Operations**: Test Git repository detection
+- **Similarity Functions**: Test project similarity algorithms
+
+**Key Test Areas:**
+- Project directory discovery
+- Git repository scanning
+- Output formatting
+- Similarity scoring algorithms
+- Command-line argument handling
+
+### Integration Tests (`integration_test.go`)
+- **End-to-End Testing**: Full command execution
+- **Database Integration**: Test database creation and persistence
+- **XDG Compliance**: Test XDG environment variable handling
+- **Error Handling**: Test invalid commands and flags
+
+**Key Test Areas:**
+- Command execution
+- Database file creation
+- Cache operations
+- Environment variable handling
+- Error scenarios
+
+## Test Coverage
+
+### Overall Coverage: 53.9%
+
+| Package | Coverage | Status |
+|---------|----------|--------|
+| `internal/database` | 83.2% | ✅ Excellent |
+| `internal/cache` | 85.3% | ✅ Excellent |
+| `cmd` | 34.2% | ⚠️ Needs improvement |
+
+### Coverage Details
+
+#### High Coverage Areas (>80%)
+- Database CRUD operations
+- Cache TTL and concurrency
+- Project similarity algorithms
+- Output formatting functions
+- Git repository detection
+
+#### Medium Coverage Areas (50-80%)
+- Database initialization
+- Cache directory management
+- Project directory discovery
+- Command execution flow
+
+#### Low Coverage Areas (<50%)
+- GitHub API integration
+- Clone command functionality
+- Update command operations
+- Error handling paths
+
+## Running Tests
+
+### Unit Tests Only
+```bash
+# Run all unit tests
+go test ./internal/... ./cmd
+
+# Run with coverage
+go test ./internal/... ./cmd -coverprofile=coverage.out
+
+# Generate coverage report
+go tool cover -html=coverage.out -o coverage.html
+go tool cover -func=coverage.out
+```
+
+### Individual Package Tests
+```bash
+# Database tests
+go test ./internal/database -v
+
+# Cache tests
+go test ./internal/cache -v
+
+# Command tests
+go test ./cmd -v
+```
+
+### Integration Tests
+```bash
+# All tests (including integration)
+go test ./... -v
+
+# Integration tests only
+go test -run TestIntegration -v
+```
+
+## Test Data
+
+### Test Files
+- `testdata/projects-dirs.list`: Sample configuration file for testing
+
+### Test Environment
+- **Temporary Directories**: All tests use `t.TempDir()` for isolation
+- **Environment Variables**: Tests set `XDG_CACHE_HOME` and `XDG_CONFIG_HOME`
+- **Database**: Tests create isolated SQLite databases
+- **Cleanup**: Automatic cleanup of test artifacts
+
+## Test Patterns
+
+### Database Testing
+```go
+func TestDatabaseOperations(t *testing.T) {
+    // Create isolated test database
+    tempDir := t.TempDir()
+    os.Setenv("XDG_CACHE_HOME", tempDir)
+    
+    db, err := New()
+    if err != nil {
+        t.Fatalf("Failed to create database: %v", err)
+    }
+    defer db.Close()
+    
+    // Test operations
+    // ...
+}
+```
+
+### Cache Testing
+```go
+func TestCacheOperations(t *testing.T) {
+    // Create isolated test cache
+    tempDir := t.TempDir()
+    os.Setenv("XDG_CACHE_HOME", tempDir)
+    
+    cache := New()
+    
+    // Test cache operations
+    // ...
+}
+```
+
+### CLI Testing
+```go
+func TestProjectsCommand(t *testing.T) {
+    // Set up test environment
+    tempDir := t.TempDir()
+    os.Setenv("XDG_CACHE_HOME", tempDir)
+    
+    // Test command functions
+    // ...
+}
+```
+
+## Performance Testing
+
+### Concurrency Tests
+- **Database**: Test concurrent reads/writes with WAL mode
+- **Cache**: Test concurrent cache operations
+- **Commands**: Test command execution under load
+
+### Benchmarking
+```bash
+# Run benchmarks
+go test -bench=. ./...
+
+# Memory profiling
+go test -memprofile=mem.prof ./...
+```
+
+## Continuous Integration
+
+### Test Requirements
+- All unit tests must pass
+- Coverage should be >80% for core packages
+- No race conditions in concurrent tests
+- XDG compliance verified
+
+### Test Environment
+- **Go Version**: 1.21+
+- **SQLite**: Available system dependency
+- **OS**: Linux (primary), macOS, Windows
+
+## Future Improvements
+
+### Coverage Improvements
+1. **GitHub Integration**: Add tests for GitHub API calls
+2. **Clone Command**: Test repository cloning functionality
+3. **Update Command**: Test database update operations
+4. **Error Handling**: Test error scenarios and recovery
+
+### Test Enhancements
+1. **Mocking**: Add mocks for external dependencies
+2. **Benchmarks**: Add performance benchmarks
+3. **Property Testing**: Add property-based tests
+4. **Fuzzing**: Add fuzz testing for input validation
+
+### Integration Testing
+1. **End-to-End**: Complete workflow testing
+2. **Performance**: Load testing with large datasets
+3. **Compatibility**: Cross-platform testing
+4. **Migration**: Test data migration scenarios
+
+## Troubleshooting
+
+### Common Issues
+
+#### Test Failures
+- **Environment**: Ensure XDG environment variables are set
+- **Dependencies**: Verify SQLite is available
+- **Permissions**: Check file system permissions
+- **Cleanup**: Ensure test cleanup is working
+
+#### Coverage Issues
+- **Missing Tests**: Add tests for uncovered functions
+- **Edge Cases**: Test error conditions and edge cases
+- **Integration**: Add integration tests for complex workflows
+
+#### Performance Issues
+- **Concurrency**: Check for race conditions
+- **Memory**: Monitor memory usage in tests
+- **Database**: Verify database performance under load
+
+## Best Practices
+
+### Test Organization
+- **Package Structure**: Mirror source package structure
+- **Test Naming**: Use descriptive test names
+- **Test Data**: Use realistic test data
+- **Cleanup**: Always clean up test artifacts
+
+### Test Quality
+- **Isolation**: Tests should be independent
+- **Deterministic**: Tests should produce consistent results
+- **Fast**: Tests should run quickly
+- **Reliable**: Tests should not be flaky
+
+### Maintenance
+- **Regular Updates**: Keep tests up to date with code changes
+- **Coverage Monitoring**: Track coverage trends
+- **Performance**: Monitor test execution time
+- **Documentation**: Keep test documentation current

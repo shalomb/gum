@@ -1,0 +1,295 @@
+# Advanced Gum Usage
+
+## Command Reference
+
+### Projects Command
+```bash
+gum projects [flags]
+```
+
+#### Flags
+- `--format string`: Output format (simple, json, table) (default "simple")
+- `--refresh`: Force refresh of project discovery
+- `--search string`: Search projects by name
+- `--similar string`: Find projects similar to given name
+- `--limit int`: Limit number of results (default 0 = no limit)
+
+#### Examples
+```bash
+# Basic usage
+gum projects
+
+# JSON output for scripting
+gum projects --format json
+
+# Search for specific projects
+gum projects --search "api"
+
+# Find similar projects
+gum projects --similar "web"
+
+# Limit results
+gum projects --limit 10
+```
+
+### Directory Management
+```bash
+gum dirs [flags]
+```
+
+#### Flags
+- `--add string`: Add directory to scan list
+- `--remove string`: Remove directory from scan list
+- `--list`: List configured directories
+- `--refresh`: Refresh directory cache
+
+#### Examples
+```bash
+# List configured directories
+gum dirs --list
+
+# Add new directory
+gum dirs --add ~/new-projects
+
+# Remove directory
+gum dirs --remove ~/old-projects
+```
+
+### Cache Management
+```bash
+gum dirs-cache [flags]
+```
+
+#### Flags
+- `--clear`: Clear directory cache
+- `--info`: Show cache information
+- `--refresh`: Refresh cache
+
+#### Examples
+```bash
+# Clear cache
+gum dirs-cache --clear
+
+# Show cache info
+gum dirs-cache --info
+```
+
+## Integration Examples
+
+### Shell Integration
+
+#### Bash Function
+```bash
+# Add to ~/.bashrc
+g() {
+    local project=$(gum projects --search "$1" | head -1)
+    if [ -n "$project" ]; then
+        cd "$project"
+    else
+        echo "Project not found: $1"
+    fi
+}
+```
+
+#### Zsh Function
+```bash
+# Add to ~/.zshrc
+function g() {
+    local project=$(gum projects --search "$1" | head -1)
+    if [ -n "$project" ]; then
+        cd "$project"
+    else
+        echo "Project not found: $1"
+    fi
+}
+```
+
+### Tmux Integration
+
+#### tmux.conf
+```bash
+# Quick project switching
+bind-key C-p new-window -c "$(gum projects --format simple | fzf)"
+```
+
+### Vim/Neovim Integration
+
+#### Telescope Plugin
+```lua
+-- telescope.lua
+local telescope = require('telescope')
+telescope.setup({
+  extensions = {
+    gum = {
+      command = 'gum projects --format json',
+      parser = function(output)
+        local projects = vim.json.decode(output)
+        return vim.tbl_map(function(project)
+          return {
+            value = project.path,
+            display = project.name,
+            ordinal = project.name,
+          }
+        end, projects)
+      end
+    }
+  }
+})
+```
+
+## Scripting Examples
+
+### Find and Open Project
+```bash
+#!/bin/bash
+# open-project.sh
+
+PROJECT_NAME="$1"
+if [ -z "$PROJECT_NAME" ]; then
+    echo "Usage: $0 <project-name>"
+    exit 1
+fi
+
+PROJECT_PATH=$(gum projects --search "$PROJECT_NAME" --format simple | head -1)
+if [ -n "$PROJECT_PATH" ]; then
+    cd "$PROJECT_PATH"
+    exec "$SHELL"
+else
+    echo "Project not found: $PROJECT_NAME"
+    exit 1
+fi
+```
+
+### Project Statistics
+```bash
+#!/bin/bash
+# project-stats.sh
+
+echo "Project Statistics:"
+echo "=================="
+
+TOTAL=$(gum projects --format simple | wc -l)
+echo "Total projects: $TOTAL"
+
+# Count by directory
+echo ""
+echo "Projects by directory:"
+gum projects --format simple | sed 's|/[^/]*$||' | sort | uniq -c | sort -nr
+```
+
+### Automated Backup
+```bash
+#!/bin/bash
+# backup-projects.sh
+
+BACKUP_DIR="/backup/projects"
+mkdir -p "$BACKUP_DIR"
+
+gum projects --format simple | while read project; do
+    if [ -d "$project" ]; then
+        project_name=$(basename "$project")
+        echo "Backing up: $project_name"
+        tar -czf "$BACKUP_DIR/$project_name.tar.gz" -C "$(dirname "$project")" "$project_name"
+    fi
+done
+```
+
+## Performance Optimization
+
+### Large Project Collections
+
+#### Limit Scanning
+```yaml
+# ~/.config/gum/config.yaml
+projects:
+  - ~/active-projects    # Only scan active projects
+  # - ~/archive-projects  # Comment out large archives
+```
+
+#### Cache Optimization
+```bash
+# Refresh cache periodically
+gum projects --refresh
+
+# Clear cache if corrupted
+gum dirs-cache --clear
+```
+
+### Network Drives
+
+#### Exclude Slow Paths
+```yaml
+# ~/.config/gum/config.yaml
+projects:
+  - ~/local-projects
+  # - /mnt/slow-network-drive  # Exclude slow paths
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### Slow Performance
+```bash
+# Check cache status
+gum dirs-cache --info
+
+# Refresh cache
+gum projects --refresh
+```
+
+#### Missing Projects
+```bash
+# Check configuration
+cat ~/.config/gum/config.yaml
+
+# Verify directories exist
+ls -la ~/projects
+
+# Force refresh
+gum projects --refresh
+```
+
+#### Permission Errors
+```bash
+# Check directory permissions
+ls -la ~/projects
+
+# Fix permissions if needed
+chmod 755 ~/projects
+```
+
+### Debug Mode
+
+#### Verbose Output
+```bash
+# Enable debug logging
+export GUM_DEBUG=1
+gum projects --refresh
+```
+
+#### Check Database
+```bash
+# Inspect SQLite database
+sqlite3 ~/.local/share/gum/gum.db "SELECT * FROM projects LIMIT 10;"
+```
+
+## Best Practices
+
+### Configuration Management
+1. **Use version control**: Track your `config.yaml`
+2. **Document decisions**: Comment why directories are included
+3. **Regular cleanup**: Remove unused directories
+4. **Test changes**: Verify config changes work
+
+### Performance
+1. **Limit scope**: Only scan directories you use
+2. **Use cache**: Let gum cache results
+3. **Regular refresh**: Update cache periodically
+4. **Monitor size**: Watch database growth
+
+### Integration
+1. **Shell functions**: Create convenient shortcuts
+2. **Editor plugins**: Integrate with your editor
+3. **Automation**: Use in scripts and workflows
+4. **Documentation**: Document your customizations
