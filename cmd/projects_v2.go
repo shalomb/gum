@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/shalomb/gum/internal/database"
@@ -55,7 +56,7 @@ func init() {
 
 func doListProjectsV2(format string, refresh bool, verbose bool, withGithub bool) {
 	// Initialize database
-	db, err := database.New(getDatabasePath())
+	db, err := database.New()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize database: %v\n", err)
 		os.Exit(1)
@@ -123,7 +124,9 @@ func fetchProjectsV2(db *database.Database) []*database.Project {
 		// Fallback to auto-discovery
 		projectDirs = discoverProjectDirsV2()
 		// Cache the discovered directories
-		db.SetProjectDirs(projectDirs)
+		for _, dir := range projectDirs {
+			db.UpsertProjectDir(dir)
+		}
 	}
 	
 	// Find all Git repositories in the directories
@@ -310,7 +313,7 @@ func sortProjectsBySimilarityV2(projects []*database.Project, currentDir string)
 }
 
 func clearProjectsCache() error {
-	db, err := database.New(getDatabasePath())
+	db, err := database.New()
 	if err != nil {
 		return err
 	}
@@ -320,10 +323,21 @@ func clearProjectsCache() error {
 	return cache.ClearCache("projects")
 }
 
-func getDatabasePath() string {
-	cacheDir := os.Getenv("XDG_CACHE_HOME")
-	if cacheDir == "" {
-		cacheDir = filepath.Join(os.Getenv("HOME"), ".cache")
+func calculateSimilarity(s1, s2 string) int {
+	// Simple similarity calculation based on common characters
+	if s1 == s2 {
+		return 100
 	}
-	return filepath.Join(cacheDir, "gum", "gum.db")
+	
+	common := 0
+	for _, c1 := range s1 {
+		for _, c2 := range s2 {
+			if c1 == c2 {
+				common++
+				break
+			}
+		}
+	}
+	
+	return common * 100 / len(s1)
 }

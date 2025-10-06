@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -228,7 +227,7 @@ func (m *Migrator) LinkGitHubRepositories() (int, error) {
 	cloneURLMap := make(map[string]int64)
 	for _, repo := range githubRepos {
 		if repo.CloneURL != "" {
-			cloneURLMap[repo.CloneURL] = repo.ID
+			cloneURLMap[repo.CloneURL] = int64(repo.ID)
 		}
 	}
 
@@ -242,7 +241,7 @@ func (m *Migrator) LinkGitHubRepositories() (int, error) {
 		// Try to find matching GitHub repository
 		if githubRepoID, exists := cloneURLMap[project.RemoteURL]; exists {
 			// Update project with GitHub repo ID
-			project.GitHubRepoID = githubRepoID
+			project.GitHubRepoID = int64(githubRepoID)
 			if err := m.db.UpsertProject(project); err != nil {
 				continue // Skip failed updates
 			}
@@ -366,7 +365,7 @@ func (m *Migrator) RestoreDatabase(backupPath string) error {
 	}
 
 	// Reopen database
-	newDB, err := New(m.db.dbPath)
+	newDB, err := New()
 	if err != nil {
 		return fmt.Errorf("failed to reopen database: %v", err)
 	}

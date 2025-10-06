@@ -4,6 +4,7 @@ Copyright © 2023 shalomb <s.bhooshi@gmail.com>
 package database
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -25,7 +26,7 @@ func (c *DatabaseCache) GetProjects() ([]*Project, error) {
 	}
 
 	// Cache miss - this should trigger a refresh
-	return nil, ErrCacheMiss
+	return nil, fmt.Errorf("cache miss")
 }
 
 // GetProjectDirs retrieves project directories from cache or database
@@ -36,7 +37,7 @@ func (c *DatabaseCache) GetProjectDirs() ([]*ProjectDir, error) {
 	}
 
 	// Cache miss - this should trigger a refresh
-	return nil, ErrCacheMiss
+	return nil, fmt.Errorf("cache miss")
 }
 
 // SetProjects updates the projects cache

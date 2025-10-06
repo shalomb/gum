@@ -120,12 +120,6 @@ func doSync() error {
 	return nil
 }
 
-func getCacheDir() string {
-	if cacheHome := os.Getenv("XDG_CACHE_HOME"); cacheHome != "" {
-		return fmt.Sprintf("%s/gum", cacheHome)
-	}
-	return fmt.Sprintf("%s/.cache/gum", os.Getenv("HOME"))
-}
 
 func initDatabase() (*sql.DB, error) {
 	// Get cache directory

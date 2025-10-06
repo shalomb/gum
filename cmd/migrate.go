@@ -83,8 +83,7 @@ func runMigration() error {
 	}
 
 	// Initialize database
-	dbPath := getDatabasePath()
-	db, err := database.New(dbPath)
+	db, err := database.New()
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %v", err)
 	}
@@ -124,10 +123,9 @@ func rollbackMigration() error {
 	fmt.Println("Rolling back migration...")
 
 	cacheDir := getCacheDir()
-	dbPath := getDatabasePath()
 
 	// Initialize database
-	db, err := database.New(dbPath)
+	db, err := database.New()
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %v", err)
 	}
@@ -150,8 +148,7 @@ func rollbackMigration() error {
 func createBackup(backupPath string) error {
 	fmt.Printf("Creating database backup to %s...\n", backupPath)
 
-	dbPath := getDatabasePath()
-	db, err := database.New(dbPath)
+	db, err := database.New()
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %v", err)
 	}
@@ -177,8 +174,7 @@ func restoreFromBackup(backupPath string) error {
 		return fmt.Errorf("backup file does not exist: %s", backupPath)
 	}
 
-	dbPath := getDatabasePath()
-	db, err := database.New(dbPath)
+	db, err := database.New()
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %v", err)
 	}
@@ -205,17 +201,4 @@ func needsMigration(cacheDir string) bool {
 	_, dirsExists := os.Stat(projectDirsFile)
 
 	return projectsExists == nil || dirsExists == nil
-}
-
-func getCacheDir() string {
-	cacheDir := os.Getenv("XDG_CACHE_HOME")
-	if cacheDir == "" {
-		cacheDir = filepath.Join(os.Getenv("HOME"), ".cache")
-	}
-	return filepath.Join(cacheDir, "gum")
-}
-
-func getDatabasePath() string {
-	cacheDir := getCacheDir()
-	return filepath.Join(cacheDir, "gum.db")
 }

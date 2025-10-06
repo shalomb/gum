@@ -15,7 +15,8 @@ import (
 
 // Database represents the gum SQLite database
 type Database struct {
-	db *sql.DB
+	db     *sql.DB
+	dbPath string
 }
 
 // New creates a new database connection
@@ -42,7 +43,12 @@ func New() (*Database, error) {
 		return nil, fmt.Errorf("failed to initialize schema: %w", err)
 	}
 	
-	return &Database{db: db}, nil
+	// Run schema migrations
+	if err := runMigrations(db); err != nil {
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
+	}
+	
+	return &Database{db: db, dbPath: dbPath}, nil
 }
 
 // Close closes the database connection
@@ -151,17 +157,67 @@ func initSchema(db *sql.DB) error {
 	return err
 }
 
+// runMigrations runs any necessary schema migrations
+func runMigrations(db *sql.DB) error {
+	// Check if cache_metadata table exists
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='cache_metadata'").Scan(&count)
+	if err != nil {
+		return err
+	}
+	
+	// If cache_metadata table doesn't exist, create it
+	if count == 0 {
+		createCacheMetadataSQL := `
+			CREATE TABLE cache_metadata (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				cache_key TEXT NOT NULL UNIQUE,
+				last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+				ttl_seconds INTEGER DEFAULT 300,
+				data_hash TEXT,
+				created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			);
+			
+			CREATE INDEX IF NOT EXISTS idx_cache_metadata_key ON cache_metadata(cache_key);
+			CREATE INDEX IF NOT EXISTS idx_cache_metadata_updated ON cache_metadata(last_updated);
+		`
+		
+		_, err = db.Exec(createCacheMetadataSQL)
+		if err != nil {
+			return err
+		}
+	}
+	
+	// Check if github_repo_id column exists in projects table
+	var columnCount int
+	err = db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('projects') WHERE name='github_repo_id'").Scan(&columnCount)
+	if err != nil {
+		return err
+	}
+	
+	// If github_repo_id column doesn't exist, add it
+	if columnCount == 0 {
+		_, err = db.Exec("ALTER TABLE projects ADD COLUMN github_repo_id INTEGER")
+		if err != nil {
+			return err
+		}
+	}
+	
+	return nil
+}
+
 // Project represents a Git project
 type Project struct {
-	ID           int       `json:"id"`
-	Path         string    `json:"path"`
-	Name         string    `json:"name"`
-	RemoteURL    string    `json:"remote_url"`
-	Branch       string    `json:"branch"`
-	LastModified time.Time `json:"last_modified"`
-	GitCount     int       `json:"git_count"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID            int       `json:"id"`
+	Path          string    `json:"path"`
+	Name          string    `json:"name"`
+	RemoteURL     string    `json:"remote_url"`
+	Branch        string    `json:"branch"`
+	LastModified  time.Time `json:"last_modified"`
+	GitCount      int       `json:"git_count"`
+	GitHubRepoID  int64     `json:"github_repo_id"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 // ProjectDir represents a project directory
