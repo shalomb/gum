@@ -1,0 +1,90 @@
+# Test targets for migration validation
+
+.PHONY: test-migration test-unit test-integration test-performance test-all clean-test
+
+# Run all migration tests
+test-all: test-unit test-integration test-performance
+	@echo "🎉 All tests completed successfully!"
+
+# Run unit tests
+test-unit:
+	@echo "🧪 Running unit tests..."
+	go test -v ./internal/database/... -run TestMigration
+	go test -v ./cmd/... -run TestMigration
+
+# Run integration tests
+test-integration:
+	@echo "🔗 Running integration tests..."
+	go test -v ./cmd/... -run TestMigrationIntegration
+	go test -v ./cmd/... -run TestBugReproduction
+
+# Run performance tests
+test-performance:
+	@echo "⚡ Running performance tests..."
+	go test -v ./cmd/... -run TestPerformance -timeout 30s
+
+# Run quick validation
+test-quick:
+	@echo "🚀 Running quick validation..."
+	go run validate_migration.go
+
+# Run comprehensive test suite
+test-comprehensive:
+	@echo "🧪 Running comprehensive test suite..."
+	chmod +x test_migration.sh
+	./test_migration.sh
+
+# Test migration with real data (if available)
+test-real-data:
+	@echo "📊 Testing with real data..."
+	@if [ -f ~/.cache/gum/projects.json ]; then \
+		echo "Found real projects.json, creating backup..."; \
+		cp ~/.cache/gum/projects.json ~/.cache/gum/projects.json.backup; \
+		echo "Running migration..."; \
+		./gum migrate; \
+		echo "Testing new system..."; \
+		./gum projects-v2 --verbose; \
+		echo "Rolling back..."; \
+		./gum migrate --rollback; \
+		echo "Restoring backup..."; \
+		mv ~/.cache/gum/projects.json.backup ~/.cache/gum/projects.json; \
+		echo "✅ Real data test completed"; \
+	else \
+		echo "⚠️  No real data found, skipping real data test"; \
+	fi
+
+# Clean up test artifacts
+clean-test:
+	@echo "🧹 Cleaning up test artifacts..."
+	rm -rf /tmp/gum_*_test*
+	rm -f validate_migration
+	rm -f test_migration.sh.log
+
+# Build test binary
+build-test:
+	@echo "🔨 Building test binary..."
+	go build -o gum-test .
+
+# Run specific test
+test-specific:
+	@echo "🎯 Running specific test: $(TEST)"
+	go test -v ./$(TEST) -run $(FUNC)
+
+# Help
+help-test:
+	@echo "Available test targets:"
+	@echo "  test-all          - Run all tests"
+	@echo "  test-unit         - Run unit tests"
+	@echo "  test-integration  - Run integration tests"
+	@echo "  test-performance  - Run performance tests"
+	@echo "  test-quick        - Run quick validation"
+	@echo "  test-comprehensive - Run comprehensive test suite"
+	@echo "  test-real-data    - Test with real data (if available)"
+	@echo "  clean-test        - Clean up test artifacts"
+	@echo "  build-test        - Build test binary"
+	@echo "  test-specific     - Run specific test (TEST=path FUNC=function)"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make test-quick"
+	@echo "  make test-all"
+	@echo "  make test-specific TEST=cmd FUNC=TestMigrationIntegration"

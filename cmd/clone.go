@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -46,30 +47,20 @@ Examples:
 			return
 		}
 		
-		// Get existing projects for similarity matching
-		existingProjects := getExistingProjects()
-		
-		// Find best clone location
-		suggestions := suggestCloneLocation(normalizedRepo, existingProjects)
-		
-		if cloneSuggest {
-			// Just show suggestions
-			fmt.Printf("Suggested clone locations for %s:\n", normalizedRepo)
-			for i, suggestion := range suggestions {
-				fmt.Printf("%d. %s (similarity: %d)\n", i+1, suggestion.Path, suggestion.Score)
-			}
-			return
-		}
-		
-		// Use the best suggestion or ask user
+		// Simple 1:1 mapping: ORG/REPO -> ~/ORG/REPO
 		var targetPath string
 		if cloneTarget != "" {
 			targetPath = cloneTarget
-		} else if len(suggestions) > 0 {
-			targetPath = suggestions[0].Path
 		} else {
-			// Fallback to default location
-			targetPath = filepath.Join(os.Getenv("HOME"), "projects", filepath.Base(normalizedRepo))
+			// Direct mapping: shalomb/vizor -> ~/shalomb/vizor
+			targetPath = filepath.Join(os.Getenv("HOME"), normalizedRepo)
+		}
+		
+		if cloneSuggest {
+			// Just show what would happen
+			fmt.Printf("Repository %s would be cloned to: %s\n", normalizedRepo, targetPath)
+			fmt.Printf("After cloning, run: gum dirs-cache --refresh\n")
+			return
 		}
 		
 		// Clone the repository
@@ -238,12 +229,16 @@ func cloneRepo(repo, targetPath string) {
 	cloneURL := "https://github.com/" + repo + ".git"
 	fmt.Printf("Cloning %s to %s...\n", cloneURL, targetPath)
 	
-	// Use git clone command
-	cmd := fmt.Sprintf("git clone %s %s", cloneURL, targetPath)
-	fmt.Printf("Running: %s\n", cmd)
+	// Execute git clone command
+	cmd := exec.Command("git", "clone", cloneURL, targetPath)
+	output, err := cmd.CombinedOutput()
 	
-	// Note: In a real implementation, you'd use os/exec to run the git command
-	// For now, just show what would be executed
-	fmt.Printf("Repository would be cloned to: %s\n", targetPath)
+	if err != nil {
+		fmt.Printf("Error cloning repository: %v\n", err)
+		fmt.Printf("Command output: %s\n", string(output))
+		return
+	}
+	
+	fmt.Printf("Successfully cloned to: %s\n", targetPath)
 	fmt.Printf("After cloning, run: gum dirs-cache --refresh\n")
 }

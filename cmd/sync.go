@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -18,15 +21,22 @@ import (
 var (
 	syncCmd = &cobra.Command{
 		Use:   "sync",
-		Short: "Sync repository metadata from GitHub",
-		Long: `Sync repository metadata from GitHub API including:
+		Short: "Sync repository metadata and local repositories",
+		Long: `Sync repository metadata from GitHub API and local Git repositories:
+
+GitHub Metadata Sync:
 - Repository names and descriptions
 - Topics and languages
 - Activity metrics (stars, forks, issues)
 - Timestamps (created, updated, pushed)
 - Repository properties (private, archived, fork)
 
-This command is designed to be run daily via crontab to keep metadata fresh.`,
+Local Repository Sync:
+- Parallel git fetch --all --prune across all repositories
+- Safe operation that never overwrites local changes
+- Updates remote tracking branches and removes stale refs
+
+This command is designed to be run daily via crontab to keep everything fresh.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := doSync(); err != nil {
 				log.Fatalf("Sync failed: %v", err)
@@ -41,11 +51,14 @@ This command is designed to be run daily via crontab to keep metadata fresh.`,
 func init() {
 	rootCmd.AddCommand(syncCmd)
 	
-	syncCmd.Flags().StringVarP(&syncType, "type", "t", "full", "Sync type: full, incremental, metadata")
+	syncCmd.Flags().StringVarP(&syncType, "type", "t", "full", "Sync type: full, incremental, metadata, repos")
 	syncCmd.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "Show what would be synced without making changes")
 }
 
 func doSync() error {
+	fmt.Printf("🔄 Starting gum sync (%s mode)\n", syncType)
+	fmt.Println()
+	
 	// Initialize GitHub client
 	client, err := github.NewGitHubClient()
 	if err != nil {
@@ -69,11 +82,28 @@ func doSync() error {
 	var syncErr error
 	switch syncType {
 	case "full":
+		fmt.Println("📊 Syncing GitHub metadata...")
 		syncErr = performFullSync(db, client, syncID)
+		if syncErr == nil {
+			fmt.Println()
+			fmt.Println("📁 Syncing local repositories...")
+			syncErr = performRepoSync(syncID)
+		}
 	case "incremental":
+		fmt.Println("📊 Syncing stale GitHub metadata...")
 		syncErr = performIncrementalSync(db, client, syncID)
 	case "metadata":
+		fmt.Println("📊 Syncing GitHub metadata only...")
 		syncErr = performMetadataSync(db, client, syncID)
+	case "repos":
+		fmt.Println("📁 Syncing local repositories...")
+		syncErr = performRepoSync(syncID)
+	case "repos-fetch":
+		fmt.Println("📁 Fetching remote changes for all repositories...")
+		syncErr = performRepoSync(syncID)
+	case "repos-pull":
+		fmt.Println("📁 Pulling changes for all repositories...")
+		syncErr = performRepoSync(syncID)
 	default:
 		syncErr = fmt.Errorf("invalid sync type: %s", syncType)
 	}
@@ -85,7 +115,8 @@ func doSync() error {
 		updateSyncStatus(db, syncID, "completed", "")
 	}
 	
-	fmt.Printf("Sync completed successfully (%s)\n", syncType)
+	fmt.Println()
+	fmt.Printf("✅ Sync completed successfully (%s)\n", syncType)
 	return nil
 }
 
@@ -339,6 +370,126 @@ func performMetadataSync(db *sql.DB, client *github.GitHubClient, syncID int64) 
 	// without doing a full repository discovery
 	// For now, we'll do a limited incremental sync
 	return performIncrementalSync(db, client, syncID)
+}
+
+func performRepoSync(syncID int64) error {
+	fmt.Println("Starting repository sync...")
+	
+	// Find all Git repositories
+	repos, err := findGitRepositories()
+	if err != nil {
+		return fmt.Errorf("failed to find repositories: %v", err)
+	}
+	
+	fmt.Printf("Found %d repositories\n", len(repos))
+	
+	// Update sync status
+	db, err := initDatabase()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	
+	_, err = db.Exec(`
+		UPDATE github_sync_status 
+		SET repositories_total = ?
+		WHERE id = ?
+	`, len(repos), syncID)
+	if err != nil {
+		return err
+	}
+	
+	// Perform parallel git fetch
+	return syncRepositories(repos, syncID)
+}
+
+func findGitRepositories() ([]string, error) {
+	var repos []string
+	
+	// Search common project directories
+	searchPaths := []string{
+		filepath.Join(os.Getenv("HOME"), "projects"),
+		filepath.Join(os.Getenv("HOME"), "oneTakeda"),
+		filepath.Join(os.Getenv("HOME"), "projects-local"),
+	}
+	
+	for _, searchPath := range searchPaths {
+		if _, err := os.Stat(searchPath); os.IsNotExist(err) {
+			continue
+		}
+		
+		err := filepath.Walk(searchPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return nil // Skip errors
+			}
+			
+			if info.IsDir() && info.Name() == ".git" {
+				repoPath := filepath.Dir(path)
+				repos = append(repos, repoPath)
+				return filepath.SkipDir // Don't recurse into .git
+			}
+			
+			return nil
+		})
+		
+		if err != nil {
+			log.Printf("Error walking %s: %v", searchPath, err)
+		}
+	}
+	
+	return repos, nil
+}
+
+func syncRepositories(repos []string, syncID int64) error {
+	var wg sync.WaitGroup
+	semaphore := make(chan struct{}, 20) // Limit to 20 concurrent fetches
+	
+	successCount := 0
+	errorCount := 0
+	results := make(chan string, len(repos))
+	
+	for _, repo := range repos {
+		wg.Add(1)
+		go func(repoPath string) {
+			defer wg.Done()
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+			
+			if err := safeGitFetch(repoPath); err != nil {
+				results <- fmt.Sprintf("❌ %s (%s)", filepath.Base(repoPath), err.Error())
+				errorCount++
+			} else {
+				results <- fmt.Sprintf("✅ %s", filepath.Base(repoPath))
+				successCount++
+			}
+		}(repo)
+	}
+	
+	// Start a goroutine to print results as they come in
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+	
+	// Print results as they come in
+	for result := range results {
+		fmt.Printf("  %s\n", result)
+	}
+	
+	fmt.Printf("\nRepository sync completed: %d successful, %d errors\n", successCount, errorCount)
+	return nil
+}
+
+func safeGitFetch(repoPath string) error {
+	// git fetch --all --prune is always safe
+	cmd := exec.Command("git", "fetch", "--all", "--prune")
+	cmd.Dir = repoPath
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("git fetch failed: %v", string(output))
+	}
+	
+	return nil
 }
 
 func upsertRepository(db *sql.DB, repo *github.GitHubMetadata) error {
