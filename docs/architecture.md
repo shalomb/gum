@@ -30,11 +30,22 @@ Gum is a modern CLI tool built in Go that replaces legacy shell scripts with a r
 - **`database.go`**: Connection management and schema initialization
 - **`operations.go`**: CRUD operations for all entities
 - **`schema.sql`**: Complete database schema definition
+- **`cache.go`**: Database-backed caching with TTL support
+- **`migration.go`**: JSON to SQLite migration utilities
+- **`integrity.go`**: Database integrity monitoring and verification
+- **`concurrency_test.go`**: Comprehensive concurrency testing
 
 ### 3. Cache Layer (`internal/cache/`)
 
 - **`cache.go`**: File-based caching with TTL support
 - **Legacy**: JSON-based caching (being replaced by database)
+
+### 4. New Commands (`cmd/`)
+
+- **`projects_v2.go`**: Database-backed project listing with unified cache
+- **`migrate.go`**: Database migration management
+- **`integrity.go`**: Database integrity verification
+- **`stress_test.go`**: Concurrency stress testing
 
 ## Data Flow
 

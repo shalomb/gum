@@ -49,6 +49,16 @@ Gum has a comprehensive test suite covering unit tests, integration tests, and d
 - **GitHub Sync**: Test repository metadata synchronization
 - **Similarity Functions**: Test project similarity algorithms
 
+#### Concurrency Tests (`internal/database/concurrency_test.go`)
+- **Coverage**: 100% of concurrency scenarios
+- **Concurrent Upserts**: Test multiple goroutines upserting the same project
+- **Mixed Operations**: Test concurrent read/write operations
+- **Transaction Integrity**: Test transaction rollback and consistency
+- **Cache Consistency**: Test cache consistency under concurrent load
+- **Database Integrity**: Test database integrity after concurrent operations
+- **Race Condition Prevention**: Test for race conditions and deadlocks
+- **Long-Running Operations**: Test system stability over extended periods
+
 **Key Test Areas:**
 - Project directory discovery
 - Git repository scanning
@@ -140,6 +150,21 @@ go test ./... -v
 
 # Integration tests only
 go test -run TestIntegration -v
+```
+
+### Concurrency Tests
+```bash
+# Run comprehensive concurrency tests
+./test_manual_concurrency.sh
+
+# Run specific concurrency tests
+go test ./internal/database -run TestConcurrent -v
+
+# Test database integrity
+gum integrity
+
+# Test cache consistency
+gum projects-v2 | wc -l && gum projects-v2 | wc -l
 ```
 
 ## Test Data

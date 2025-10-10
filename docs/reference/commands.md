@@ -6,6 +6,33 @@ Gum provides commands for project discovery, directory management, and cache ope
 
 ## Commands
 
+### `gum integrity`
+
+Check database integrity and concurrency safety.
+
+#### Syntax
+```bash
+gum integrity
+```
+
+#### Description
+Performs comprehensive integrity checks including:
+- Database file integrity (SQLite PRAGMA integrity_check)
+- Foreign key constraint validation
+- Orphaned record detection
+- Duplicate record detection
+- Cache consistency verification
+- Concurrent operation safety
+
+#### Examples
+```bash
+# Check database integrity
+gum integrity
+
+# Verify system is safe for concurrent operations
+gum integrity && echo "System is safe for concurrent operations"
+```
+
 ### `gum projects`
 
 List and search Git projects from configured directories.
