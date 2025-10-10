@@ -109,6 +109,8 @@ func (c *DatabaseCache) ClearCache(key string) error {
 		return c.clearTable("projects")
 	case "project-dirs":
 		return c.clearTable("project_dirs")
+	case "dirs":
+		return c.clearTable("dir_usage")
 	case "all":
 		return c.clearAllCaches()
 	default:
@@ -153,12 +155,38 @@ func (c *DatabaseCache) updateCacheMetadata(key string, lastUpdated time.Time) e
 		ttlSeconds = 300 // 5 minutes
 	case "project-dirs":
 		ttlSeconds = 1800 // 30 minutes
+	case "dirs":
+		ttlSeconds = 30 // 30 seconds (frequently changing)
 	default:
 		ttlSeconds = 300 // 5 minutes default
 	}
 
 	_, err := c.db.db.Exec(query, key, lastUpdated, ttlSeconds)
 	return err
+}
+
+// GetDirs retrieves directory usage from cache or database
+func (c *DatabaseCache) GetDirs() ([]*DirUsage, error) {
+	// Check if cache is valid
+	if c.IsCacheValid("dirs") {
+		return c.db.GetFrequentDirs(1000) // Get top 1000 dirs
+	}
+
+	// Cache miss - this should trigger a refresh
+	return nil, fmt.Errorf("cache miss")
+}
+
+// SetDirs updates the directory usage cache
+func (c *DatabaseCache) SetDirs(dirs []*DirUsage) error {
+	// Upsert directory usage entries
+	for _, dir := range dirs {
+		if err := c.db.UpsertDirUsage(dir); err != nil {
+			return err
+		}
+	}
+
+	// Update cache metadata
+	return c.updateCacheMetadata("dirs", time.Now())
 }
 
 // GetCacheStats returns cache statistics
@@ -180,6 +208,14 @@ func (c *DatabaseCache) GetCacheStats() (map[string]interface{}, error) {
 		return nil, err
 	}
 	stats["project_dirs_count"] = dirsCount
+
+	// Get directory usage count
+	var dirUsageCount int
+	err = c.db.db.QueryRow("SELECT COUNT(*) FROM dir_usage").Scan(&dirUsageCount)
+	if err != nil {
+		return nil, err
+	}
+	stats["dir_usage_count"] = dirUsageCount
 
 	// Get GitHub repos count
 	var githubReposCount int

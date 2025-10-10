@@ -16,7 +16,7 @@ import (
 	ps "github.com/mitchellh/go-ps"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/shalomb/gum/internal/cache"
+	"github.com/shalomb/gum/internal/database"
 )
 
 // dirsCmd represents the dirs command
@@ -40,8 +40,15 @@ Combines current process data with historical cache to provide comprehensive dir
 		}
 		
 		if clearCache {
-			c := cache.New()
-			if err := c.Clear("dirs"); err != nil {
+			db, err := database.New()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to initialize database: %v\n", err)
+				os.Exit(1)
+			}
+			defer db.Close()
+			
+			cache := database.NewDatabaseCache(db)
+			if err := cache.ClearCache("dirs"); err != nil {
 				fmt.Fprintf(os.Stderr, "Error clearing cache: %v\n", err)
 				os.Exit(1)
 			}
@@ -72,33 +79,55 @@ type DirEntry struct {
 }
 
 func doUpdateDirs(format string, verbose bool, refresh bool) {
-	c := cache.New()
+	// Initialize database
+	db, err := database.New()
+	if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to initialize database: %v\n", err)
+			os.Exit(1)
+	}
+	defer db.Close()
+	
+	// Initialize cache
+	cache := database.NewDatabaseCache(db)
+	
 	var entries []*DirEntry
 	
 	// Always fetch current process data
 	currentEntries := fetchDirs()
 	
-	// Try to get historical data from cache first (unless refresh is requested)
+	// Try to get historical data from database first (unless refresh is requested)
 	var historicalEntries []*DirEntry
 	if !refresh {
-		if c.Get("dirs", &historicalEntries) {
-			// Cache hit - use cached historical data
+		dbDirs, err := cache.GetDirs()
+		if err == nil {
+			// Cache hit - convert from database format
+			historicalEntries = convertFromDatabaseDirs(dbDirs)
 		} else {
-			// Cache miss - try to import from legacy cwds cache
-			historicalEntries = importLegacyCwdsCache()
+			// Cache miss - try one-time import from legacy cwds cache
+			historicalEntries = importLegacyCwdsOnce(db)
 			if len(historicalEntries) == 0 {
 				// No legacy cache - start with current data
 				historicalEntries = currentEntries
 			}
-			c.Set("dirs", historicalEntries, cache.DirsCacheTTL)
 		}
 	} else {
 		// Force refresh - load historical data first, then merge with current
-		if len(historicalEntries) == 0 {
-			historicalEntries = importLegacyCwdsCache()
+		dbDirs, err := cache.GetDirs()
+		if err == nil {
+			historicalEntries = convertFromDatabaseDirs(dbDirs)
 		}
 		historicalEntries = mergeDirectoryEntries(currentEntries, historicalEntries)
-		c.Set("dirs", historicalEntries, cache.DirsCacheTTL)
+	}
+	
+	// Merge current with historical
+	if !refresh {
+		historicalEntries = mergeDirectoryEntries(currentEntries, historicalEntries)
+	}
+	
+	// Save to database
+	dbDirs := convertToDatabaseDirs(historicalEntries)
+	if err := cache.SetDirs(dbDirs); err != nil {
+		log.Printf("Warning: Failed to update dirs cache: %v", err)
 	}
 	
 	// Use merged data (current + historical)
@@ -291,6 +320,48 @@ func mergeDirectoryEntries(current, historical []*DirEntry) []*DirEntry {
 	return result
 }
 
+// convertToDatabaseDirs converts DirEntry to database.DirUsage
+func convertToDatabaseDirs(entries []*DirEntry) []*database.DirUsage {
+	var dbDirs []*database.DirUsage
+	for _, entry := range entries {
+		dbDirs = append(dbDirs, &database.DirUsage{
+			Path:      entry.Path,
+			Frequency: entry.Frequency,
+			LastSeen:  entry.LastSeen,
+		})
+	}
+	return dbDirs
+}
+
+// convertFromDatabaseDirs converts database.DirUsage to DirEntry
+func convertFromDatabaseDirs(dbDirs []*database.DirUsage) []*DirEntry {
+	var entries []*DirEntry
+	now := time.Now()
+	for _, dbDir := range dbDirs {
+		entries = append(entries, &DirEntry{
+			Path:      dbDir.Path,
+			Frequency: dbDir.Frequency,
+			LastSeen:  dbDir.LastSeen,
+			Score:     calculateFrecencyScore(dbDir.Frequency, dbDir.LastSeen, now),
+		})
+	}
+	return entries
+}
+
+// importLegacyCwdsOnce imports directory data from legacy cwds cache (one-time only)
+// This checks if data already exists in the database before importing
+func importLegacyCwdsOnce(db *database.Database) []*DirEntry {
+	// Check if we already have data in the database
+	existingDirs, err := db.GetFrequentDirs(1)
+	if err == nil && len(existingDirs) > 0 {
+		// Database already has data, skip legacy import
+		return nil
+	}
+	
+	// No data in database, try legacy import
+	return importLegacyCwdsCache()
+}
+
 // importLegacyCwdsCache imports directory data from legacy cwds cache
 func importLegacyCwdsCache() []*DirEntry {
 	// Use XDG_CACHE_HOME or default to ~/.cache
@@ -359,6 +430,8 @@ func importLegacyCwdsCache() []*DirEntry {
 		return nil
 	}
 	
-	log.Printf("Imported %d directories from legacy cwds cache", len(entries))
+	if len(entries) > 0 {
+		log.Printf("One-time import: Imported %d directories from legacy cwds cache", len(entries))
+	}
 	return entries
 }
