@@ -1,24 +1,23 @@
 package database
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 )
 
 func TestMigrationFromJSON(t *testing.T) {
 	// Create temporary database
-	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New(dbPath)
+	db, err := New()
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
 	defer db.Close()
 
 	// Create test JSON cache files
+	tempDir := t.TempDir()
 	cacheDir := filepath.Join(tempDir, "cache")
 	os.MkdirAll(cacheDir, 0755)
 
@@ -109,10 +108,8 @@ func TestMigrationFromJSON(t *testing.T) {
 
 func TestLinkGitHubRepositories(t *testing.T) {
 	// Create temporary database
-	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New(dbPath)
+	db, err := New()
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -147,15 +144,11 @@ func TestLinkGitHubRepositories(t *testing.T) {
 		Name:     "test-project",
 		FullName: "user/test-project",
 		CloneURL: "https://github.com/user/test-project.git",
-		Language: "Go",
-		StarCount: 100,
 	}
 	githubRepo2 := &GitHubRepo{
 		Name:     "another-project",
 		FullName: "user/another-project", 
 		CloneURL: "https://github.com/user/another-project.git",
-		Language: "Python",
-		StarCount: 50,
 	}
 
 	err = db.UpsertGitHubRepo(githubRepo1)
@@ -194,10 +187,8 @@ func TestLinkGitHubRepositories(t *testing.T) {
 
 func TestCacheConsistency(t *testing.T) {
 	// Create temporary database
-	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New(dbPath)
+	db, err := New()
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -247,10 +238,8 @@ func TestCacheConsistency(t *testing.T) {
 
 func TestConcurrentAccess(t *testing.T) {
 	// Create temporary database
-	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New(dbPath)
+	db, err := New()
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}

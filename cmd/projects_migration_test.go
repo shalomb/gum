@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/shalomb/gum/internal/database"
 )
@@ -62,8 +62,7 @@ func TestMigrationFixesCacheInconsistency(t *testing.T) {
 	}
 	
 	// Initialize database
-	dbPath := filepath.Join(cacheDir, "gum.db")
-	db, err := database.New(dbPath)
+	db, err := database.New()
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -168,8 +167,7 @@ func TestConcurrentAccessAfterMigration(t *testing.T) {
 	cacheDir := filepath.Join(tempDir, "gum")
 	os.MkdirAll(cacheDir, 0755)
 	
-	dbPath := filepath.Join(cacheDir, "gum.db")
-	db, err := database.New(dbPath)
+	db, err := database.New()
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -276,8 +274,7 @@ func TestMigrationRollback(t *testing.T) {
 	}
 	
 	// Initialize database
-	dbPath := filepath.Join(cacheDir, "gum.db")
-	db, err := database.New(dbPath)
+	db, err := database.New()
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}

@@ -85,8 +85,7 @@ func TestMigrationIntegration(t *testing.T) {
 	
 	// Test 2: Run migration
 	t.Run("RunMigration", func(t *testing.T) {
-		dbPath := filepath.Join(cacheDir, "gum.db")
-		db, err := database.New(dbPath)
+		db, err := database.New()
 		if err != nil {
 			t.Fatalf("Failed to create database: %v", err)
 		}
@@ -103,8 +102,7 @@ func TestMigrationIntegration(t *testing.T) {
 	
 	// Test 3: Verify migration results
 	t.Run("VerifyMigrationResults", func(t *testing.T) {
-		dbPath := filepath.Join(cacheDir, "gum.db")
-		db, err := database.New(dbPath)
+		db, err := database.New()
 		if err != nil {
 			t.Fatalf("Failed to open database: %v", err)
 		}
@@ -135,8 +133,7 @@ func TestMigrationIntegration(t *testing.T) {
 	
 	// Test 4: Test cache consistency
 	t.Run("TestCacheConsistency", func(t *testing.T) {
-		dbPath := filepath.Join(cacheDir, "gum.db")
-		db, err := database.New(dbPath)
+		db, err := database.New()
 		if err != nil {
 			t.Fatalf("Failed to open database: %v", err)
 		}
@@ -175,8 +172,7 @@ func TestMigrationIntegration(t *testing.T) {
 	
 	// Test 5: Test refresh functionality
 	t.Run("TestRefreshFunctionality", func(t *testing.T) {
-		dbPath := filepath.Join(cacheDir, "gum.db")
-		db, err := database.New(dbPath)
+		db, err := database.New()
 		if err != nil {
 			t.Fatalf("Failed to open database: %v", err)
 		}
@@ -213,8 +209,7 @@ func TestMigrationIntegration(t *testing.T) {
 	
 	// Test 6: Test rollback functionality
 	t.Run("TestRollbackFunctionality", func(t *testing.T) {
-		dbPath := filepath.Join(cacheDir, "gum.db")
-		db, err := database.New(dbPath)
+		db, err := database.New()
 		if err != nil {
 			t.Fatalf("Failed to open database: %v", err)
 		}
@@ -254,8 +249,7 @@ func TestMigrationIntegration(t *testing.T) {
 	
 	// Test 7: Test concurrent access
 	t.Run("TestConcurrentAccess", func(t *testing.T) {
-		dbPath := filepath.Join(cacheDir, "gum.db")
-		db, err := database.New(dbPath)
+		db, err := database.New()
 		if err != nil {
 			t.Fatalf("Failed to open database: %v", err)
 		}
@@ -297,8 +291,7 @@ func TestMigrationIntegration(t *testing.T) {
 	
 	// Test 8: Test performance
 	t.Run("TestPerformance", func(t *testing.T) {
-		dbPath := filepath.Join(cacheDir, "gum.db")
-		db, err := database.New(dbPath)
+		db, err := database.New()
 		if err != nil {
 			t.Fatalf("Failed to open database: %v", err)
 		}
@@ -402,7 +395,7 @@ func TestBugReproduction(t *testing.T) {
 	
 	// Now test the migration fixes this inconsistency
 	dbPath := filepath.Join(cacheDir, "gum.db")
-	db, err := database.New(dbPath)
+	db, err := database.New()
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}

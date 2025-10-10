@@ -56,6 +56,11 @@ func (d *Database) Close() error {
 	return d.db.Close()
 }
 
+// GetDB returns the underlying database connection for advanced operations
+func (d *Database) GetDB() *sql.DB {
+	return d.db
+}
+
 // getDatabasePath returns the path to the SQLite database file
 func getDatabasePath() string {
 	cacheDir := os.Getenv("XDG_CACHE_HOME")
