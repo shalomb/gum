@@ -14,8 +14,8 @@ The `gum projects` command shows inconsistent results between cached and fresh d
    ```yaml
    projects:
      - ~/projects/
-     - ~/projects-local/
-     - ~/oneTakeda/
+     - ~/code/
+     - ~/dev/
      - ~/shalomb/
      - ~/projects/docker-images/
    ```
@@ -50,8 +50,8 @@ The `gum projects` command shows inconsistent results between cached and fresh d
 # ~/.config/gum/config.yaml
 projects:
   - ~/projects/
-  - ~/projects-local/
-  - ~/oneTakeda/
+  - ~/code/
+  - ~/dev/
   - ~/shalomb/
   - ~/projects/docker-images/
 ```

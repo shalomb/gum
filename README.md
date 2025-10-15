@@ -24,10 +24,11 @@ Gum delivers exceptional performance through multiple optimization strategies:
 
 ### Technical Optimizations
 - **Native Go**: Compiled binary with no runtime dependencies
-- **Intelligent Caching**: TTL-based caching reduces file system operations
+- **Cron-Based Updates**: Background processes keep data fresh without user delays
 - **Database Optimization**: SQLite with WAL mode for concurrent access
 - **Parallel Processing**: Concurrent directory scanning
 - **Hybrid Approach**: Combines locate bulk discovery with file system accuracy
+- **Instant Response**: Always returns cached data immediately
 
 ## Installation
 
@@ -140,7 +141,7 @@ gum clone <repository-url>
 Gum automatically discovers project directories by scanning:
 - `~/projects/` (default)
 - `~/projects-*` (glob pattern)
-- `~/oneTakeda/` (hardcoded)
+- `~/code/` (default)
 
 ### Database Schema
 
@@ -158,6 +159,18 @@ Gum follows XDG Base Directory specification:
 - **Config**: `~/.config/` (for configuration files)
 - **Cache**: `~/.cache/gum/` (for database and temporary data)
 - **State**: `~/.local/state/gum/` (for runtime state, planned)
+
+### Cron Job Setup
+
+For optimal performance, set up cron jobs to keep data fresh:
+
+```bash
+# Add to crontab (crontab -e)
+0 */6 * * * gum projects --refresh  # Refresh projects every 6 hours
+0 * * * * gum dirs --refresh        # Refresh directories every hour
+```
+
+This ensures data is always fresh without impacting user response times.
 
 ## Development
 
@@ -218,7 +231,7 @@ brew install sqlite3          # macOS
 **No projects found**
 ```bash
 # Check if directories exist
-ls -la ~/projects ~/oneTakeda ~/projects-local
+ls -la ~/projects ~/code ~/dev
 
 # Force refresh discovery
 gum projects --refresh

@@ -3,8 +3,8 @@
 # Edit this file to customize which directories gum scans for Git repositories
 
 projects:
-  - ~projects  # 0 Git repositories
-  - ~oneTakeda  # 0 Git repositories
+  - ~/projects  # 0 Git repositories
+  - ~/code      # 0 Git repositories
 
 # Additional directories you can add:
 # - ~/code
