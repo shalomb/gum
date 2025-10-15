@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -10,8 +11,10 @@ import (
 // TestConcurrentUpserts tests multiple goroutines upserting the same project
 func TestConcurrentUpserts(t *testing.T) {
 	// Create temporary database
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New()
+	db, err := NewWithPath(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -67,8 +70,10 @@ func TestConcurrentUpserts(t *testing.T) {
 // TestConcurrentReadsAndWrites tests mixed read/write operations
 func TestConcurrentReadsAndWrites(t *testing.T) {
 	// Create temporary database
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New()
+	db, err := NewWithPath(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -168,8 +173,10 @@ func TestConcurrentReadsAndWrites(t *testing.T) {
 // TestTransactionIntegrity tests that transactions maintain consistency
 func TestTransactionIntegrity(t *testing.T) {
 	// Create temporary database
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New()
+	db, err := NewWithPath(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -219,8 +226,10 @@ func TestTransactionIntegrity(t *testing.T) {
 // TestCacheConsistencyUnderLoad tests cache consistency under concurrent load
 func TestCacheConsistencyUnderLoad(t *testing.T) {
 	// Create temporary database
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New()
+	db, err := NewWithPath(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -291,8 +300,10 @@ func TestCacheConsistencyUnderLoad(t *testing.T) {
 // TestDatabaseIntegrityAfterConcurrentOperations tests database integrity
 func TestDatabaseIntegrityAfterConcurrentOperations(t *testing.T) {
 	// Create temporary database
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New()
+	db, err := NewWithPath(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}

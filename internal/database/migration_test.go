@@ -9,15 +9,16 @@ import (
 
 func TestMigrationFromJSON(t *testing.T) {
 	// Create temporary database
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New()
+	db, err := NewWithPath(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
 	defer db.Close()
 
 	// Create test JSON cache files
-	tempDir := t.TempDir()
 	cacheDir := filepath.Join(tempDir, "cache")
 	os.MkdirAll(cacheDir, 0755)
 
@@ -108,8 +109,10 @@ func TestMigrationFromJSON(t *testing.T) {
 
 func TestLinkGitHubRepositories(t *testing.T) {
 	// Create temporary database
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New()
+	db, err := NewWithPath(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -178,17 +181,30 @@ func TestLinkGitHubRepositories(t *testing.T) {
 		t.Fatalf("Failed to get projects: %v", err)
 	}
 
+	// Debug: Print project details
 	for _, project := range projects {
-		if project.GitHubRepoID == 0 {
-			t.Errorf("Project %s was not linked to GitHub repository", project.Name)
+		t.Logf("Project: %s, RemoteURL: %s, GitHubRepoID: %d", project.Name, project.RemoteURL, project.GitHubRepoID)
+	}
+
+	// Check that exactly 2 projects were linked (the ones we created)
+	linkedCount := 0
+	for _, project := range projects {
+		if project.GitHubRepoID != 0 {
+			linkedCount++
 		}
+	}
+
+	if linkedCount != 2 {
+		t.Errorf("Expected 2 linked projects, got %d", linkedCount)
 	}
 }
 
 func TestCacheConsistency(t *testing.T) {
 	// Create temporary database
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New()
+	db, err := NewWithPath(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}
@@ -238,8 +254,10 @@ func TestCacheConsistency(t *testing.T) {
 
 func TestConcurrentAccess(t *testing.T) {
 	// Create temporary database
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
 	
-	db, err := New()
+	db, err := NewWithPath(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
 	}

@@ -4,6 +4,7 @@ Copyright © 2023 shalomb <s.bhooshi@gmail.com>
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 )
@@ -13,19 +14,20 @@ import (
 // UpsertProject inserts or updates a project
 func (d *Database) UpsertProject(project *Project) error {
 	query := `
-		INSERT INTO projects (path, name, remote_url, branch, last_modified, git_count)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO projects (path, name, remote_url, branch, last_modified, git_count, github_repo_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(path) DO UPDATE SET
 			name = excluded.name,
 			remote_url = excluded.remote_url,
 			branch = excluded.branch,
 			last_modified = excluded.last_modified,
 			git_count = excluded.git_count,
+			github_repo_id = excluded.github_repo_id,
 			updated_at = CURRENT_TIMESTAMP
 	`
 	
 	_, err := d.db.Exec(query, project.Path, project.Name, project.RemoteURL, 
-		project.Branch, project.LastModified, project.GitCount)
+		project.Branch, project.LastModified, project.GitCount, project.GitHubRepoID)
 	return err
 }
 
@@ -37,7 +39,7 @@ func (d *Database) GetProjects(sortBySimilarity bool, targetPath string) ([]*Pro
 	if sortBySimilarity && targetPath != "" {
 		// Use similarity scoring with Levenshtein distance
 		query = `
-			SELECT id, path, name, remote_url, branch, last_modified, git_count, created_at, updated_at
+			SELECT id, path, name, remote_url, branch, last_modified, git_count, github_repo_id, created_at, updated_at
 			FROM projects
 			ORDER BY 
 				CASE 
@@ -50,7 +52,7 @@ func (d *Database) GetProjects(sortBySimilarity bool, targetPath string) ([]*Pro
 		args = []interface{}{targetPath, targetPath}
 	} else {
 		query = `
-			SELECT id, path, name, remote_url, branch, last_modified, git_count, created_at, updated_at
+			SELECT id, path, name, remote_url, branch, last_modified, git_count, github_repo_id, created_at, updated_at
 			FROM projects
 			ORDER BY updated_at DESC
 		`
@@ -65,10 +67,16 @@ func (d *Database) GetProjects(sortBySimilarity bool, targetPath string) ([]*Pro
 	var projects []*Project
 	for rows.Next() {
 		var p Project
+		var githubRepoID sql.NullInt64
 		err := rows.Scan(&p.ID, &p.Path, &p.Name, &p.RemoteURL, &p.Branch, 
-			&p.LastModified, &p.GitCount, &p.CreatedAt, &p.UpdatedAt)
+			&p.LastModified, &p.GitCount, &githubRepoID, &p.CreatedAt, &p.UpdatedAt)
 		if err != nil {
 			return nil, err
+		}
+		if githubRepoID.Valid {
+			p.GitHubRepoID = githubRepoID.Int64
+		} else {
+			p.GitHubRepoID = 0
 		}
 		projects = append(projects, &p)
 	}
@@ -233,7 +241,7 @@ func (d *Database) GetSimilarProjects(targetPath string, limit int) ([]*Project,
 	}
 	
 	query := `
-		SELECT id, path, name, remote_url, branch, last_modified, git_count, created_at, updated_at
+		SELECT id, path, name, remote_url, branch, last_modified, git_count, github_repo_id, created_at, updated_at
 		FROM projects
 		WHERE 
 			LOWER(name) LIKE '%' || LOWER(?) || '%' OR
@@ -257,10 +265,16 @@ func (d *Database) GetSimilarProjects(targetPath string, limit int) ([]*Project,
 	var projects []*Project
 	for rows.Next() {
 		var p Project
+		var githubRepoID sql.NullInt64
 		err := rows.Scan(&p.ID, &p.Path, &p.Name, &p.RemoteURL, &p.Branch, 
-			&p.LastModified, &p.GitCount, &p.CreatedAt, &p.UpdatedAt)
+			&p.LastModified, &p.GitCount, &githubRepoID, &p.CreatedAt, &p.UpdatedAt)
 		if err != nil {
 			return nil, err
+		}
+		if githubRepoID.Valid {
+			p.GitHubRepoID = githubRepoID.Int64
+		} else {
+			p.GitHubRepoID = 0
 		}
 		projects = append(projects, &p)
 	}

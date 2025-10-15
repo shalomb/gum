@@ -22,7 +22,11 @@ type Database struct {
 // New creates a new database connection
 func New() (*Database, error) {
 	dbPath := getDatabasePath()
-	
+	return NewWithPath(dbPath)
+}
+
+// NewWithPath creates a new database connection with a custom path
+func NewWithPath(dbPath string) (*Database, error) {
 	// Ensure database directory exists
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
 		return nil, fmt.Errorf("failed to create database directory: %w", err)
