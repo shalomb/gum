@@ -403,8 +403,8 @@ func findGitRepositories() ([]string, error) {
 	// Search common project directories
 	searchPaths := []string{
 		filepath.Join(os.Getenv("HOME"), "projects"),
-		filepath.Join(os.Getenv("HOME"), "oneTakeda"),
-		filepath.Join(os.Getenv("HOME"), "projects-local"),
+		filepath.Join(os.Getenv("HOME"), "code"),
+		filepath.Join(os.Getenv("HOME"), "dev"),
 	}
 	
 	for _, searchPath := range searchPaths {

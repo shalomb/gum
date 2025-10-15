@@ -107,7 +107,7 @@ func discoverProjectDirs() []ProjectDir {
 	// Add default directories
 	defaultDirs := []string{
 		filepath.Join(home, "projects"),
-		filepath.Join(home, "oneTakeda"),
+		filepath.Join(home, "code"),
 	}
 	
 	// Add ~/projects-* directories

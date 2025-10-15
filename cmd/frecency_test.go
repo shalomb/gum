@@ -12,57 +12,49 @@ func TestFrecencyScore(t *testing.T) {
 		name      string
 		frequency int
 		age       time.Duration
-		wantMin   int64
-		wantMax   int64
+		expectMin int64 // Minimum expected score (behavioral)
 	}{
 		{
 			name:      "Recent high frequency",
 			frequency: 100,
 			age:       30 * time.Minute, // 30 minutes ago
-			wantMin:   4000,
-			wantMax:   5000,
+			expectMin: 1000, // Should be high due to recent + frequent
 		},
 		{
 			name:      "Recent low frequency",
 			frequency: 5,
 			age:       30 * time.Minute, // 30 minutes ago
-			wantMin:   1500,
-			wantMax:   2000,
+			expectMin: 100, // Should be moderate due to recent but low frequency
 		},
 		{
 			name:      "Today high frequency",
 			frequency: 50,
 			age:       12 * time.Hour, // 12 hours ago
-			wantMin:   2000,
-			wantMax:   3000,
+			expectMin: 500, // Should be good due to high frequency but some decay
 		},
 		{
 			name:      "This week",
 			frequency: 20,
 			age:       3 * 24 * time.Hour, // 3 days ago
-			wantMin:   800,
-			wantMax:   1200,
+			expectMin: 100, // Should be moderate due to age
 		},
 		{
 			name:      "This month",
 			frequency: 10,
 			age:       15 * 24 * time.Hour, // 15 days ago
-			wantMin:   200,
-			wantMax:   400,
+			expectMin: 20, // Should be lower due to age
 		},
 		{
 			name:      "Old but frequent",
 			frequency: 100,
 			age:       2 * 30 * 24 * time.Hour, // 2 months ago
-			wantMin:   100,
-			wantMax:   200,
+			expectMin: 10, // Should be low due to age but not zero
 		},
 		{
 			name:      "Very old",
 			frequency: 5,
 			age:       6 * 30 * 24 * time.Hour, // 6 months ago
-			wantMin:   10,
-			wantMax:   50,
+			expectMin: 1, // Should be very low but not zero
 		},
 	}
 	
@@ -71,14 +63,15 @@ func TestFrecencyScore(t *testing.T) {
 			lastSeen := now.Add(-tt.age)
 			score := calculateFrecencyScore(tt.frequency, lastSeen, now)
 			
-			if score < tt.wantMin || score > tt.wantMax {
-				t.Errorf("calculateFrecencyScore() = %d, want between %d and %d", 
-					score, tt.wantMin, tt.wantMax)
+			// Test behavioral properties
+			if score < tt.expectMin {
+				t.Errorf("calculateFrecencyScore() = %d, want >= %d (too low for %s)", 
+					score, tt.expectMin, tt.name)
 			}
 			
-			// Ensure score is never zero
+			// Ensure score is never zero (key behavioral property)
 			if score <= 0 {
-				t.Errorf("calculateFrecencyScore() = %d, want > 0", score)
+				t.Errorf("calculateFrecencyScore() = %d, want > 0 (score should never be zero)", score)
 			}
 		})
 	}

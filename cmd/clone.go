@@ -59,7 +59,7 @@ Examples:
 		if cloneSuggest {
 			// Just show what would happen
 			fmt.Printf("Repository %s would be cloned to: %s\n", normalizedRepo, targetPath)
-			fmt.Printf("After cloning, run: gum dirs-cache --refresh\n")
+			fmt.Printf("After cloning, run: gum dirs --refresh\n")
 			return
 		}
 		
@@ -240,5 +240,5 @@ func cloneRepo(repo, targetPath string) {
 	}
 	
 	fmt.Printf("Successfully cloned to: %s\n", targetPath)
-	fmt.Printf("After cloning, run: gum dirs-cache --refresh\n")
+	fmt.Printf("After cloning, run: gum dirs --refresh\n")
 }

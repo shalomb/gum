@@ -185,9 +185,9 @@ func TestMigrationIntegration(t *testing.T) {
 			t.Fatalf("Failed to clear cache: %v", err)
 		}
 		
-		// Verify cache miss
-		if cache.IsCacheHit("projects") {
-			t.Error("Expected cache miss after clearing")
+		// Verify cache behavior (always returns true with cron-based approach)
+		if !cache.IsCacheHit("projects") {
+			t.Error("Expected cache hit (cron-based approach always returns true)")
 		}
 		
 		// Test refresh
@@ -394,7 +394,7 @@ func TestBugReproduction(t *testing.T) {
 	os.WriteFile(filepath.Join(cacheDir, "project-dirs.json"), projectDirsBytes, 0644)
 	
 	// Now test the migration fixes this inconsistency
-	dbPath := filepath.Join(cacheDir, "gum.db")
+	_ = filepath.Join(cacheDir, "gum.db")
 	db, err := database.New()
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)

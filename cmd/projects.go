@@ -95,15 +95,11 @@ func doListProjects(format string, refresh bool, verbose bool, withGithub bool) 
 			os.Exit(1)
 		}
 	} else {
-		// Try to get from cache first
+		// Get projects from database (cron jobs keep data fresh)
 		projects, err2 = cache.GetProjects()
 		if err2 != nil {
-			// Cache miss - discover projects and update cache
-			projects, err2 = discoverAndCacheProjects(db, cache)
-			if err2 != nil {
-				fmt.Fprintf(os.Stderr, "Failed to discover projects: %v\n", err2)
-				os.Exit(1)
-			}
+			fmt.Fprintf(os.Stderr, "Failed to get projects: %v\n", err2)
+			os.Exit(1)
 		}
 	}
 	

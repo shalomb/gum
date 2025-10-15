@@ -271,7 +271,7 @@ func printDatabaseStatistics(db *database.Database) {
 	}
 	fmt.Printf("Linked Projects: %d\n", linkedProjectsCount)
 
-	// Cache metadata count
+	// Cache metadata count (deprecated - TTL removed)
 	var cacheMetadataCount int
 	err = db.GetDB().QueryRow("SELECT COUNT(*) FROM cache_metadata").Scan(&cacheMetadataCount)
 	if err != nil {

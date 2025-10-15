@@ -95,15 +95,15 @@ func doUpdateDirs(format string, verbose bool, refresh bool) {
 	// Always fetch current process data
 	currentEntries := fetchDirs()
 	
-	// Try to get historical data from database first (unless refresh is requested)
+	// Get historical data from database (cron jobs keep data fresh)
 	var historicalEntries []*DirEntry
 	if !refresh {
 		dbDirs, err := cache.GetDirs()
 		if err == nil {
-			// Cache hit - convert from database format
+			// Database has data - convert from database format
 			historicalEntries = convertFromDatabaseDirs(dbDirs)
 		} else {
-			// Cache miss - try one-time import from legacy cwds cache
+			// Database empty - try one-time import from legacy cwds cache
 			historicalEntries = importLegacyCwdsOnce(db)
 			if len(historicalEntries) == 0 {
 				// No legacy cache - start with current data
