@@ -92,9 +92,10 @@ github_repos (standalone)
 
 ### Caching Strategy
 
-- **Projects**: 5-minute TTL (stable data)
-- **Directories**: 30-second TTL (frequently changing)
-- **Project Dirs**: 1-hour TTL (rarely changing)
+- **Cron-Based Updates**: Background processes keep data fresh
+- **Instant Response**: Commands return database data immediately
+- **No TTL Delays**: No file system scans during normal operation
+- **Data Freshness**: Managed by scheduled cron jobs
 
 ## Frecency Algorithm
 

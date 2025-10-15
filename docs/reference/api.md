@@ -254,7 +254,7 @@ Discovers project directories intelligently.
 
 ```go
 dirs := smartDiscoverProjectDirs("/home/user")
-// Returns: ["/home/user/projects", "/home/user/oneTakeda"]
+// Returns: ["/home/user/projects", "/home/user/code"]
 ```
 
 #### `countGitReposInDir(dir string) int`

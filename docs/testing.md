@@ -25,14 +25,14 @@ Gum has a comprehensive test suite covering unit tests, integration tests, and d
 
 #### Cache Tests (`internal/cache/cache_test.go`)
 - **Coverage**: 85.3% of statements
-- **TTL Functionality**: Test time-to-live expiration
+- **Legacy Cache**: Test file-based caching (being phased out)
 - **Concurrency**: Test concurrent cache operations
 - **File Operations**: Test cache file creation and corruption handling
 - **XDG Compliance**: Test XDG directory usage
 
 **Key Test Areas:**
 - Cache set/get operations
-- TTL expiration and cleanup
+- Legacy cache functionality
 - Concurrent access patterns
 - File system operations
 - Error handling and recovery

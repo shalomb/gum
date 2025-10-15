@@ -100,10 +100,10 @@ gum projects --format simple
 ### Example Output
 
 ```
-~/oneTakeda/project1
-~/oneTakeda/project2
-~/projects-local/my-app
-~/projects-local/website
+~/code/project1
+~/code/project2
+~/projects/my-app
+~/projects/website
 
 gum: Auto-discovered 2 project directories
 gum: Generated config stub at ~/.config/gum/config.yaml
@@ -201,7 +201,7 @@ brew install sqlite3          # macOS
 **No projects found**
 ```bash
 # Check if directories exist
-ls -la ~/projects ~/oneTakeda ~/projects-local
+ls -la ~/projects ~/code ~/dev
 
 # Force refresh discovery
 gum projects --refresh

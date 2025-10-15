@@ -82,7 +82,7 @@ gum projects --refresh
 ```
 ~/projects/my-app
 ~/projects/website
-~/oneTakeda/api-service
+~/code/api-service
 ```
 
 **JSON Format**:
@@ -106,7 +106,7 @@ gum projects --refresh
 NAME        PATH                    DIRECTORY
 my-app      ~/projects/my-app      ~/projects
 website     ~/projects/website      ~/projects
-api-service ~/oneTakeda/api-service ~/oneTakeda
+api-service ~/code/api-service      ~/code
 ```
 
 ### `gum dirs`
@@ -149,25 +149,25 @@ gum dirs --clear-cache
 
 **Default Format**:
 ```
-~/oneTakeda/terraform-teams-chatbot
+~/code/terraform-teams-chatbot
 ~/.config/dotfiles
-~/oneTakeda/machi/machi-core
-~/projects-local/gum
+~/code/machi/machi-core
+~/projects/gum
 ```
 
 **Verbose Format**:
 ```
-3218	~/oneTakeda/terraform-teams-chatbot
+3218	~/code/terraform-teams-chatbot
 2708	~/.config/dotfiles
-1791	~/oneTakeda/machi/machi-core
-1791	~/projects-local/gum
+1791	~/code/machi/machi-core
+1791	~/projects/gum
 ```
 
 **JSON Format**:
 ```json
 [
   {
-    "path": "~/oneTakeda/terraform-teams-chatbot",
+    "path": "~/code/terraform-teams-chatbot",
     "score": 3218,
     "frequency": 23,
     "last_seen": "2025-10-04T17:32:38+02:00"
@@ -434,8 +434,8 @@ gum update
 ```yaml
 projects:
   - ~/projects
-  - ~/oneTakeda
-  - ~/projects-local
+  - ~/code
+  - ~/dev
 ```
 
 ### Legacy Configuration
@@ -444,8 +444,8 @@ projects:
 ```
 # Project directories
 ~/projects
-~/oneTakeda
-~/projects-local
+~/code
+~/dev
 ```
 
 ## Exit Codes

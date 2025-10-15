@@ -216,7 +216,7 @@ The tool automatically migrates existing `~/.config/projects-dirs.list` files:
 ```bash
 # Format: One directory per line
 ~/projects/
-~/oneTakeda/
+~/code/
 ~/projects/docker-images/
 ```
 

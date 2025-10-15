@@ -6,7 +6,7 @@ And the user has a home directory with various project directories
 
 ## Scenario: Generate config stub automatically
 Given no configuration file exists
-And the user has Git repositories in "~/projects" and "~/oneTakeda"
+And the user has Git repositories in "~/projects" and "~/code"
 When I run "gum projects --refresh"
 Then a config stub should be generated at "~/.config/gum/config.yaml"
 And the config should contain discovered directories
@@ -24,7 +24,7 @@ Then it should contain:
 
   projects:
     - ~/projects  # 5 Git repositories
-    - ~/oneTakeda  # 12 Git repositories
+    - ~/code      # 12 Git repositories
 
   # Additional directories you can add:
   # - ~/code

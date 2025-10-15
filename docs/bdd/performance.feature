@@ -61,13 +61,13 @@ Then database connections should be reused efficiently
 And no connection leaks should occur
 And performance should remain consistent
 
-## Scenario: Cache TTL performance
-Given projects have been cached with TTL
-And the TTL has expired
+## Scenario: Cron-based cache updates
+Given projects have been cached in the database
+And cron jobs are configured to refresh data
 When I run "gum projects"
-Then the cache should be invalidated automatically
-And projects should be re-discovered
-And the new cache should be created efficiently
+Then the results should be returned instantly
+And no file system discovery should occur
+And the data should be fresh from the last cron run
 
 ## Scenario: Handle slow filesystems
 Given projects are located on a slow network filesystem
@@ -147,9 +147,9 @@ Then database queries should be optimized
 And indexes should be used effectively
 And query plans should be efficient
 
-## Scenario: Cache invalidation performance
-Given a large cache exists
-When I run "gum dirs-cache --clear"
+## Scenario: Cache clearing performance
+Given a large database exists
+When I run "gum projects --clear-cache"
 Then the cache should be cleared quickly (< 1 second)
 And subsequent operations should work normally
 And no performance degradation should occur

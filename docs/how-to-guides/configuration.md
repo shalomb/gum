@@ -11,8 +11,6 @@ Gum uses a hybrid approach to project discovery:
 
 Gum automatically scans these common directories:
 - `~/projects`
-- `~/oneTakeda`
-- `~/projects-local`
 - `~/code`
 - `~/dev`
 - `~/workspace`
@@ -42,8 +40,8 @@ projects:
 # Edit this file to customize which directories gum scans for Git repositories
 
 projects:
-  - ~/oneTakeda          # 599 Git repositories
-  - ~/projects-local     # 13 Git repositories
+  - ~/code               # 599 Git repositories
+  - ~/projects           # 13 Git repositories
   - ~/work/projects      # Work repositories
   - ~/personal/code      # Personal projects
 
@@ -79,8 +77,8 @@ Gum still supports the legacy `~/.config/projects-dirs.list` format:
 ```
 # Project directories
 ~/projects
-~/oneTakeda
-~/projects-local
+~/code
+~/dev
 ```
 
 ### Migration

@@ -34,14 +34,22 @@ And I should see all historical directories
 And the import should be logged with count
 And subsequent runs should use cached data
 
-## Scenario: Refresh with current processes
-Given historical directory data exists in cache
+## Scenario: Manual refresh with current processes
+Given historical directory data exists in database
 And current processes are running in different directories
 When I run "gum dirs --refresh"
 Then current process directories should be merged with historical data
 And frequency counts should be updated
 And scores should be recalculated
-And the cache should be updated
+And the database should be updated
+
+## Scenario: Cron-based directory updates
+Given cron jobs are configured to refresh directory data
+And historical directory data exists in database
+When I run "gum dirs" after cron job execution
+Then the results should be returned immediately
+And the data should be fresh from the last cron run
+And no process scanning should occur
 
 ## Scenario: Frecency scoring properties
 Given directories with different access patterns

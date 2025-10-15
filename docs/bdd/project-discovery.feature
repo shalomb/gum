@@ -6,7 +6,7 @@ And the user has Git repositories in their home directory
 
 ## Scenario: Auto-discover projects without configuration
 Given no configuration file exists at "~/.config/gum/config.yaml"
-And the user has Git repositories in "~/projects" and "~/oneTakeda"
+And the user has Git repositories in "~/projects" and "~/code"
 When I run "gum projects"
 Then I should see all Git projects from both directories
 And I should see a message "gum: Auto-discovered 2 project directories"
@@ -119,18 +119,27 @@ When I run "gum projects"
 Then I should see projects from the absolute path
 And the path should be used as-is
 
-## Scenario: Cache performance
+## Scenario: Instant response
 Given projects have been discovered and cached
-When I run "gum projects" again
-Then the results should be returned quickly
-And the cache should be used
-
-## Scenario: Cache invalidation
-Given projects have been cached
-And the cache TTL has expired
 When I run "gum projects"
+Then the results should be returned immediately
+And no file system discovery should occur
+And the database should be the source of data
+
+## Scenario: Manual refresh
+Given projects have been cached
+When I run "gum projects --refresh"
 Then the projects should be re-discovered
-And the cache should be updated
+And the database should be updated
+And the results should be returned
+
+## Scenario: Cron-based updates
+Given cron jobs are configured to refresh data
+And projects have been discovered and cached
+When I run "gum projects" after cron job execution
+Then the results should be returned immediately
+And the data should be fresh from the last cron run
+And no file system discovery should occur
 
 ## Scenario: Directory frecency scoring
 Given directories have been accessed with different frequencies and ages

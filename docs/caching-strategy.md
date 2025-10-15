@@ -1,17 +1,20 @@
-# GitHub API Caching Strategy
+# Gum Caching Strategy
 
 ## Overview
 
-The GitHub sync functionality implements a multi-level caching strategy to optimize API usage and provide fast access to repository metadata.
+Gum implements a cron-based caching strategy that provides instant responses while maintaining data freshness through background updates. This approach eliminates TTL-based delays and provides consistent performance.
 
 ## Current Implementation
 
 ### Database Cache (Primary)
 - **Storage**: SQLite database (`~/.cache/gum/gum.db`)
-- **TTL**: 24 hours for incremental sync
+- **Update Strategy**: Cron jobs handle data freshness
+- **Response Time**: Instant (no TTL checking)
 - **Tables**: 
-  - `github_metadata`: Repository information
-  - `github_sync_status`: Sync operation tracking
+  - `projects`: Git repositories
+  - `project_dirs`: Project directories
+  - `dir_usage`: Directory frequency tracking
+  - `github_repos`: GitHub repository metadata
 
 ### Sync Types
 
