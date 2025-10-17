@@ -134,6 +134,11 @@ func doListProjects(format string, refresh bool, verbose bool, withGithub bool) 
 
 // discoverAndCacheProjects discovers projects and updates the cache
 func discoverAndCacheProjects(db *database.Database, cache *database.DatabaseCache) ([]*database.Project, error) {
+	// Load project directories from config.yaml first
+	if err := loadProjectDirsFromConfig(db); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to load config: %v\n", err)
+	}
+	
 	// Get project directories from database
 	projectDirs, err := db.GetProjectDirs()
 	if err != nil {
