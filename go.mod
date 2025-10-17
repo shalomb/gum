@@ -7,6 +7,7 @@ require (
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
