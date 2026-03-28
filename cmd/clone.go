@@ -47,13 +47,11 @@ Examples:
 			return
 		}
 		
-		// Simple 1:1 mapping: ORG/REPO -> ~/ORG/REPO
 		var targetPath string
 		if cloneTarget != "" {
 			targetPath = cloneTarget
 		} else {
-			// Direct mapping: shalomb/vizor -> ~/shalomb/vizor
-			targetPath = filepath.Join(os.Getenv("HOME"), normalizedRepo)
+			targetPath = defaultClonePath(normalizedRepo)
 		}
 		
 		if cloneSuggest {
@@ -108,6 +106,43 @@ func normalizeRepoURL(repo string) string {
 	}
 	
 	return ""
+}
+
+// githubOwner returns the authenticated GitHub username, falling back to
+// the git global user.name slug, then the empty string.
+func githubOwner() string {
+	// Try gh CLI first (most reliable)
+	if out, err := exec.Command("gh", "api", "user", "--jq", ".login").Output(); err == nil {
+		if login := strings.TrimSpace(string(out)); login != "" {
+			return login
+		}
+	}
+	// Fall back to git config
+	if out, err := exec.Command("git", "config", "--global", "github.user").Output(); err == nil {
+		if user := strings.TrimSpace(string(out)); user != "" {
+			return user
+		}
+	}
+	return ""
+}
+
+// defaultClonePath returns the conventional local path for a given org/repo:
+//   - own repos  (org == GitHub login)  → ~/shalomb/REPO
+//   - everything else                   → ~/projects/ORG/REPO
+func defaultClonePath(normalizedRepo string) string {
+	home := os.Getenv("HOME")
+	parts := strings.SplitN(normalizedRepo, "/", 2)
+	if len(parts) != 2 {
+		return filepath.Join(home, "projects", normalizedRepo)
+	}
+	org, repo := parts[0], parts[1]
+	owner := githubOwner()
+	if owner != "" && strings.EqualFold(org, owner) {
+		// Own repo: ~/shalomb/REPO  (using actual org name, not owner alias)
+		return filepath.Join(home, org, repo)
+	}
+	// Third-party: ~/projects/ORG/REPO
+	return filepath.Join(home, "projects", org, repo)
 }
 
 // getExistingProjects gets existing projects from cache
