@@ -200,41 +200,64 @@ func convertToOutputFormat(projects []*database.Project, withGithub bool) []Proj
 	return outputProjects
 }
 
-// findGitProjectsInDir finds Git projects in a directory
+// findGitProjectsInDir finds Git projects in a directory, following symlinks
 func findGitProjectsInDir(dir string) []Project {
 	var projects []Project
-	
-	// Walk directory looking for .git folders
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	visited := make(map[string]bool)
+
+	var walk func(string) error
+	walk = func(path string) error {
+		// Use Lstat to check if path is a symlink itself
+		info, err := os.Lstat(path)
 		if err != nil {
-			return nil // Skip errors
+			return nil
 		}
-		
-		// Check if this is a .git directory
-		if info.IsDir() && info.Name() == ".git" {
-			// Get the parent directory (the project root)
-			projectDir := filepath.Dir(path)
-			
-			// Skip if it's the root directory itself
-			if projectDir == dir {
+
+		// Handle symlink
+		if info.Mode()&os.ModeSymlink != 0 {
+			target, err := filepath.EvalSymlinks(path)
+			if err != nil {
 				return nil
 			}
-			
-			// Get project info
-			project := getProjectInfo(projectDir)
-			projects = append(projects, project)
-			
-			// Don't recurse into .git directories
-			return filepath.SkipDir
+			path = target
+			info, err = os.Stat(path)
+			if err != nil {
+				return nil
+			}
 		}
-		
+
+		if visited[path] {
+			return nil
+		}
+		visited[path] = true
+
+		if info.IsDir() {
+			if info.Name() == ".git" {
+				projectDir := filepath.Dir(path)
+				project := getProjectInfo(projectDir)
+				projects = append(projects, project)
+				return nil
+			}
+
+			files, err := os.ReadDir(path)
+			if err != nil {
+				return nil
+			}
+
+			for _, file := range files {
+				childPath := filepath.Join(path, file.Name())
+				if err := walk(childPath); err != nil {
+					return err
+				}
+			}
+		}
 		return nil
-	})
-	
-	if err != nil {
+	}
+
+	if err := walk(dir); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: error walking directory %s: %v\n", dir, err)
 	}
-	
+
 	return projects
 }
 
